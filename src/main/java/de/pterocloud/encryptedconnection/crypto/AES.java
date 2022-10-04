@@ -3,8 +3,6 @@ package de.pterocloud.encryptedconnection.crypto;
 import javax.crypto.*;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
@@ -24,7 +22,7 @@ public class AES {
         }
     }
 
-    public static byte[] getIV() {
+    public static byte[] generateIV() {
         byte[] IV = new byte[GCM_IV_LENGTH];
         SecureRandom random = new SecureRandom();
         random.nextBytes(IV);
@@ -36,14 +34,16 @@ public class AES {
         SecretKeySpec keySpec = new SecretKeySpec(key.getEncoded(), "AES");
         GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, IV);
         cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmParameterSpec);
-        return cipher.doFinal(plaintext);
+        byte[] cipherText = cipher.doFinal(plaintext);
+        return cipherText;
     }
 
-    public static byte[] decrypt(byte[] cipherText, SecretKey key, byte[] IV) throws Exception {
+    public static byte[] decrypt(byte[] cipherText, SecretKey key, byte[] IV) throws Exception{
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         SecretKeySpec keySpec = new SecretKeySpec(key.getEncoded(), "AES");
         GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, IV);
         cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmParameterSpec);
-        return cipher.doFinal(cipherText);
+        byte[] decryptedText = cipher.doFinal(cipherText);
+        return decryptedText;
     }
 }

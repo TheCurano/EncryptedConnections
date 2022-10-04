@@ -6,8 +6,9 @@ import javax.crypto.SecretKey;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
+import java.net.SocketTimeoutException;
 import java.security.PublicKey;
+import java.util.Base64;
 
 public class EncryptedConnection {
 
@@ -34,6 +35,13 @@ public class EncryptedConnection {
                         getPacketListener().accept(this, packet);
                     }
                 } catch (Exception e) {
+                    if (e instanceof SocketTimeoutException) {
+                        if (isConnected()) {
+                            continue;
+                        } else {
+                            throw new RuntimeException(e);
+                        }
+                    }
                     e.printStackTrace();
                 }
             }
@@ -57,6 +65,13 @@ public class EncryptedConnection {
                         getPacketListener().accept(this, packet);
                     }
                 } catch (Exception e) {
+                    if (e instanceof SocketTimeoutException) {
+                        if (isConnected()) {
+                            continue;
+                        } else {
+                            throw new RuntimeException(e);
+                        }
+                    }
                     e.printStackTrace();
                 }
             }
@@ -66,16 +81,19 @@ public class EncryptedConnection {
 
     public void send(byte[] bytes) throws Exception {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-        out.writeUTF(new String(AES.encrypt(bytes, aes, iv), StandardCharsets.UTF_8));
+        byte[] encrypted = AES.encrypt(bytes, aes, iv);
+        out.writeUTF(Base64.getEncoder().encodeToString(encrypted));
         out.flush();
-        //out.close();
+    }
+
+    public void send(Packet packet) throws Exception {
+        send(packet.serialize());
     }
 
     public byte[] receive() throws Exception {
         socket.setSoTimeout(60000);
         DataInputStream in = new DataInputStream(socket.getInputStream());
-        byte[] bytes = in.readUTF().getBytes();
-        //in.close();
+        byte[] bytes = Base64.getDecoder().decode(in.readUTF());
         return AES.decrypt(bytes, aes, iv);
     }
 

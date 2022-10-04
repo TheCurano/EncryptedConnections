@@ -4,14 +4,13 @@ import de.pterocloud.encryptedconnection.crypto.AES;
 import de.pterocloud.encryptedconnection.crypto.RSA;
 
 import javax.crypto.SecretKey;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 
 public class EncryptedServer {
 
@@ -27,11 +26,21 @@ public class EncryptedServer {
                         Packet packet = Packet.deserialize(receive(socket));
                         PublicKey publicKey = (PublicKey) packet.getObject();
                         SecretKey aes = AES.generateKey();
-                        byte[] iv = AES.getIV();
-                        Packet aesPacket = new Packet(aes, (byte) 0);
-                        Packet ivPacket = new Packet(iv, (byte) 0);
-                        send(socket, RSA.encrypt(publicKey, aesPacket.serialize()));
-                        send(socket, RSA.encrypt(publicKey, ivPacket.serialize()));
+                        byte[] iv = AES.generateIV();
+
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        ObjectOutputStream dataOutput = new ObjectOutputStream(outputStream);
+                        dataOutput.writeObject(aes);
+                        dataOutput.close();
+
+                        byte[] aesKeyEncrypted = RSA.encrypt(publicKey, Base64.getEncoder().encode(outputStream.toByteArray()));
+                        Packet aesPacket = new Packet(Base64.getEncoder().encodeToString(aesKeyEncrypted), (byte) 0);
+
+                        byte[] ivEncrypted = RSA.encrypt(publicKey, iv);
+                        Packet ivPacket = new Packet(Base64.getEncoder().encodeToString(ivEncrypted), (byte) 0);
+
+                        send(socket, aesPacket.serialize());
+                        send(socket, ivPacket.serialize());
                         encryptedConnections.add(new EncryptedConnection(socket, this, aes, iv, publicKey));
                     } catch (IOException | ClassNotFoundException e) {
                         throw new RuntimeException(e);
@@ -41,6 +50,7 @@ public class EncryptedServer {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            encryptedConnections.removeIf(connection -> !connection.getSocket().isConnected());
         }
     });
 
@@ -68,7 +78,7 @@ public class EncryptedServer {
 
     protected void send(Socket socket, byte[] bytes) throws IOException {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-        out.writeUTF(new String(bytes, StandardCharsets.UTF_8));
+        out.writeUTF(Base64.getEncoder().encodeToString(bytes));
         out.flush();
         //out.close();
     }
@@ -76,9 +86,13 @@ public class EncryptedServer {
     protected byte[] receive(Socket socket) throws IOException {
         socket.setSoTimeout(60000);
         DataInputStream in = new DataInputStream(socket.getInputStream());
-        byte[] bytes = in.readUTF().getBytes();
+        byte[] bytes = Base64.getDecoder().decode(in.readUTF());
         //in.close();
         return bytes;
+    }
+
+    public List<EncryptedConnection> getEncryptedConnections() {
+        return encryptedConnections;
     }
 
 }

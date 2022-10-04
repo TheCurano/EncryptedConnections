@@ -12,11 +12,23 @@ public class Main {
             client01.getEncryptedConnection().setPacketListener(new PacketListener((encryptedConnection, packet) -> {
                 System.out.println("Client01: " + packet.getType());
             }));
+            for (EncryptedConnection connection : server.getEncryptedConnections()) {
+                connection.setPacketListener(new PacketListener((encryptedConnection, packet) -> {
+                    System.out.println("Server: " + packet.getType());
+                    System.out.println("String: " + ((String) packet.getObject()));
+                }));
+            }
             Packet packet = new Packet("TEST");
-            client01.send(packet.serialize());
+            client01.getEncryptedConnection().send(packet);
+            if (client01.getEncryptedConnection().isConnected()) {
+                System.out.println("Nice shit");
+            }
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+        Thread.currentThread().stop();
     }
 
 }

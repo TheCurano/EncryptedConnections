@@ -5,7 +5,7 @@ import java.util.Base64;
 
 public class Packet implements Serializable {
 
-    private byte type = (byte) 1;
+    private byte type = (byte) 3;
 
     private final Object object;
 

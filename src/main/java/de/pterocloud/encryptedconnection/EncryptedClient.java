@@ -3,12 +3,10 @@ package de.pterocloud.encryptedconnection;
 import de.pterocloud.encryptedconnection.crypto.RSA;
 
 import javax.crypto.SecretKey;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
+import java.util.Base64;
 
 public class EncryptedClient {
 
@@ -25,29 +23,35 @@ public class EncryptedClient {
 
     protected void send(byte[] bytes) throws IOException {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-        out.writeUTF(new String(bytes, StandardCharsets.UTF_8));
+        out.writeUTF(Base64.getEncoder().encodeToString(bytes));
         out.flush();
-        //out.close();
     }
 
     protected byte[] receive() throws IOException {
         socket.setSoTimeout(60000);
         DataInputStream in = new DataInputStream(socket.getInputStream());
-        byte[] bytes = in.readUTF().getBytes();
-        //in.close();
-        return bytes;
+
+        return Base64.getDecoder().decode(in.readUTF());
     }
 
     public EncryptedClient connect() throws IOException, ClassNotFoundException {
         socket = new Socket(host, port);
         socket.setKeepAlive(true);
         send(new Packet(rsa.getPublic(), (byte) 0).serialize());
-        Packet sshKey = Packet.deserialize(RSA.decrypt(rsa.getPrivate(), receive()));
-        Packet iv = Packet.deserialize(RSA.decrypt(rsa.getPrivate(), receive()));
-        if (sshKey.getType() != (byte) 0 && iv.getType() != (byte) 0) {
+        Packet aesPacket = Packet.deserialize(receive());
+        Packet iv = Packet.deserialize(receive());
+
+        byte[] decryptedAESKey = RSA.decrypt(rsa.getPrivate(), Base64.getDecoder().decode((String) aesPacket.getObject()));
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64.getDecoder().decode(decryptedAESKey));
+        ObjectInputStream dataInput = new ObjectInputStream(inputStream);
+        SecretKey aesKey = (SecretKey) dataInput.readObject();
+        dataInput.close();
+        aesPacket = new Packet(aesKey, (byte) 0);
+        iv = new Packet(RSA.decrypt(rsa.getPrivate(), Base64.getDecoder().decode((String) iv.getObject())), (byte) 0);
+        if (aesPacket.getType() != (byte) 0 && iv.getType() != (byte) 0) {
             throw new RuntimeException("Invalid init packets.");
         }
-        encryptedConnection = new EncryptedConnection(socket, this, (SecretKey) sshKey.getObject(), (byte[]) iv.getObject());
+        encryptedConnection = new EncryptedConnection(socket, this, (SecretKey) aesPacket.getObject(), (byte[]) iv.getObject());
         return this;
     }
 
@@ -55,6 +59,7 @@ public class EncryptedClient {
         return encryptedConnection;
     }
 
+    @Deprecated
     public Socket getSocket() {
         return socket;
     }
