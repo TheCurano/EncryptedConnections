@@ -10,20 +10,18 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.ArrayList;
 
 public class EncryptedServer {
 
-    private int port = 9119;
+    private final int port;
     private ServerSocket server = null;
-    private ArrayList<EncryptedConnection> encryptedConnections = new ArrayList<>();
-    private Thread connectionThread = new Thread(() -> {
+    private final ArrayList<EncryptedConnection> encryptedConnections = new ArrayList<>();
+    private final Thread connectionThread = new Thread(() -> {
         while (server != null && !server.isClosed()) {
             try {
                 Socket socket = server.accept();
-                System.out.println("New connection");
                 Thread connectionThread = new Thread(() -> {
                     try {
                         Packet packet = Packet.deserialize(receive(socket));
@@ -61,21 +59,25 @@ public class EncryptedServer {
     }
 
     public void stop() {
-
+        try {
+            server.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     protected void send(Socket socket, byte[] bytes) throws IOException {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
         out.writeUTF(new String(bytes, StandardCharsets.UTF_8));
         out.flush();
-        out.close();
+        //out.close();
     }
 
     protected byte[] receive(Socket socket) throws IOException {
         socket.setSoTimeout(60000);
         DataInputStream in = new DataInputStream(socket.getInputStream());
         byte[] bytes = in.readUTF().getBytes();
-        in.close();
+        //in.close();
         return bytes;
     }
 

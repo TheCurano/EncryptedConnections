@@ -6,9 +6,7 @@ import javax.crypto.SecretKey;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyPair;
 import java.security.PublicKey;
 
 public class EncryptedConnection {
@@ -70,14 +68,14 @@ public class EncryptedConnection {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
         out.writeUTF(new String(AES.encrypt(bytes, aes, iv), StandardCharsets.UTF_8));
         out.flush();
-        out.close();
+        //out.close();
     }
 
     public byte[] receive() throws Exception {
         socket.setSoTimeout(60000);
         DataInputStream in = new DataInputStream(socket.getInputStream());
         byte[] bytes = in.readUTF().getBytes();
-        in.close();
+        //in.close();
         return AES.decrypt(bytes, aes, iv);
     }
 

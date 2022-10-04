@@ -1,6 +1,5 @@
 package de.pterocloud.encryptedconnection;
 
-import de.pterocloud.encryptedconnection.crypto.AES;
 import de.pterocloud.encryptedconnection.crypto.RSA;
 
 import javax.crypto.SecretKey;
@@ -8,13 +7,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 
 public class EncryptedClient {
 
-    protected KeyPair rsa = RSA.generateRSAKey(2048);
+    protected KeyPair rsa = RSA.generateRSAKey(4096);
     protected String host;
     protected int port;
     protected Socket socket = null;
@@ -29,20 +27,19 @@ public class EncryptedClient {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
         out.writeUTF(new String(bytes, StandardCharsets.UTF_8));
         out.flush();
-        out.close();
+        //out.close();
     }
 
     protected byte[] receive() throws IOException {
         socket.setSoTimeout(60000);
         DataInputStream in = new DataInputStream(socket.getInputStream());
         byte[] bytes = in.readUTF().getBytes();
-        in.close();
+        //in.close();
         return bytes;
     }
 
     public EncryptedClient connect() throws IOException, ClassNotFoundException {
         socket = new Socket(host, port);
-        System.out.println(socket.isConnected());
         socket.setKeepAlive(true);
         send(new Packet(rsa.getPublic(), (byte) 0).serialize());
         Packet sshKey = Packet.deserialize(RSA.decrypt(rsa.getPrivate(), receive()));
