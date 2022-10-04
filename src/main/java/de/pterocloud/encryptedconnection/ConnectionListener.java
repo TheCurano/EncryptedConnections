@@ -2,11 +2,11 @@ package de.pterocloud.encryptedconnection;
 
 import java.util.function.BiConsumer;
 
-public class PacketListener {
+public class ConnectionListener {
 
     private BiConsumer<EncryptedConnection, Packet> consumer;
 
-    public PacketListener(BiConsumer<EncryptedConnection, Packet> consumer) {
+    public ConnectionListener(BiConsumer<EncryptedConnection, Packet> consumer) {
         this.consumer = consumer;
     }
 
@@ -14,7 +14,7 @@ public class PacketListener {
         return consumer;
     }
 
-    public PacketListener setConsumer(BiConsumer<EncryptedConnection, Packet> consumer) {
+    public ConnectionListener setConsumer(BiConsumer<EncryptedConnection, Packet> consumer) {
         this.consumer = consumer;
         return this;
     }

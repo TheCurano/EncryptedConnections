@@ -9,11 +9,11 @@ public class Main {
 
             EncryptedClient client01 = new EncryptedClient("0.0.0.0", 62411);
             client01.connect();
-            client01.getEncryptedConnection().setPacketListener(new PacketListener((encryptedConnection, packet) -> {
+            client01.getEncryptedConnection().setPacketListener(new ServerListener((encryptedConnection, packet) -> {
                 System.out.println("Client01: " + packet.getType());
             }));
             for (EncryptedConnection connection : server.getEncryptedConnections()) {
-                connection.setPacketListener(new PacketListener((encryptedConnection, packet) -> {
+                connection.setPacketListener(new ServerListener((encryptedConnection, packet) -> {
                     System.out.println("Server: " + packet.getType());
                     System.out.println("String: " + ((String) packet.getObject()));
                 }));

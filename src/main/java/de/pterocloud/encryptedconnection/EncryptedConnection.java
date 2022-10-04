@@ -18,7 +18,7 @@ public class EncryptedConnection {
     private SecretKey aes = null;
     private byte[] iv = null;
     private Socket socket = null;
-    private PacketListener packetListener = null;
+    private ServerListener packetListener = null;
 
     public EncryptedConnection(Socket socket, EncryptedClient client, SecretKey aes, byte[] iv) {
         this.client = client;
@@ -31,8 +31,8 @@ public class EncryptedConnection {
                 try {
                     Packet packet = Packet.deserialize(receive());
                     System.out.println(packet.getType() + "");
-                    if (getPacketListener() != null && getPacketListener().getConsumer() != null) {
-                        getPacketListener().accept(this, packet);
+                    if (getPacketListener() != null && getPacketListener().getPacketReceived() != null) {
+                        getPacketListener().onPacketReceived(this, packet);
                     }
                 } catch (Exception e) {
                     if (e instanceof SocketTimeoutException) {
@@ -61,8 +61,8 @@ public class EncryptedConnection {
                 try {
                     Packet packet = Packet.deserialize(receive());
                     System.out.println(packet.getType() + "");
-                    if (getPacketListener() != null && getPacketListener().getConsumer() != null) {
-                        getPacketListener().accept(this, packet);
+                    if (getPacketListener() != null && getPacketListener().getPacketReceived() != null) {
+                        getPacketListener().onPacketReceived(this, packet);
                     }
                 } catch (Exception e) {
                     if (e instanceof SocketTimeoutException) {
@@ -109,12 +109,12 @@ public class EncryptedConnection {
         return socket != null && socket.isConnected();
     }
 
-    public EncryptedConnection setPacketListener(PacketListener packetListener) {
+    public EncryptedConnection setPacketListener(ServerListener packetListener) {
         this.packetListener = packetListener;
         return this;
     }
 
-    public PacketListener getPacketListener() {
+    public ServerListener getPacketListener() {
         return packetListener;
     }
 

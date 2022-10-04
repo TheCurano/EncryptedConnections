@@ -95,4 +95,8 @@ public class EncryptedServer {
         return encryptedConnections;
     }
 
+    public void setEventListener() {
+
+    }
+
 }
