@@ -29,8 +29,7 @@ public class EncryptedConnection {
         Thread packetListener = new Thread(() -> {
             while (socket.isConnected()) {
                 try {
-                    Packet packet = Packet.deserialize(receive());
-                    System.out.println(packet.getType() + "");
+                    Packet packet = receive();
                     if (getPacketListener() != null && getPacketListener().getPacketReceived() != null) {
                         getPacketListener().onPacketReceived(this, packet);
                     }
@@ -59,8 +58,7 @@ public class EncryptedConnection {
         Thread packetListener = new Thread(() -> {
             while (socket.isConnected()) {
                 try {
-                    Packet packet = Packet.deserialize(receive());
-                    System.out.println(packet.getType() + "");
+                    Packet packet = receive();
                     if (getPacketListener() != null && getPacketListener().getPacketReceived() != null) {
                         getPacketListener().onPacketReceived(this, packet);
                     }
@@ -90,11 +88,18 @@ public class EncryptedConnection {
         send(packet.serialize());
     }
 
-    public byte[] receive() throws Exception {
+    /*public byte[] receive() throws Exception {
         socket.setSoTimeout(60000);
         DataInputStream in = new DataInputStream(socket.getInputStream());
         byte[] bytes = Base64.getDecoder().decode(in.readUTF());
         return AES.decrypt(bytes, aes, iv);
+    }*/
+
+    public Packet receive() throws Exception {
+        socket.setSoTimeout(60000);
+        DataInputStream in = new DataInputStream(socket.getInputStream());
+        byte[] bytes = Base64.getDecoder().decode(in.readUTF());
+        return Packet.deserialize(AES.decrypt(bytes, aes, iv));
     }
 
     public EncryptedClient getClient() {
