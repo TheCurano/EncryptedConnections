@@ -3,6 +3,9 @@ package de.pterocloud.encryptedconnection;
 import java.io.*;
 import java.util.Base64;
 
+/**
+ * The Packet which will be transfered.
+ */
 public class Packet implements Serializable {
 
     private byte type = (byte) 3;

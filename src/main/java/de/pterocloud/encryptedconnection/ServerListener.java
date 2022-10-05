@@ -4,6 +4,10 @@ import java.net.Socket;
 import java.sql.Connection;
 import java.util.function.BiConsumer;
 
+/**
+ * The Listener for a entire EncryptedServer
+ * Trigger: PacketReceived, PreConnect (not encrypted), PostConnect (encrypted)
+ */
 public class ServerListener {
 
     private BiConsumer<EncryptedConnection, Packet> packetReceived;

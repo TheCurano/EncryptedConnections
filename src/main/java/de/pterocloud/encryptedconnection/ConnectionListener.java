@@ -2,6 +2,10 @@ package de.pterocloud.encryptedconnection;
 
 import java.util.function.BiConsumer;
 
+/**
+ * The Listener for the Connection
+ * Trigger: PacketReceived
+ */
 public class ConnectionListener {
 
     private BiConsumer<EncryptedConnection, Packet> consumer;

@@ -6,6 +6,10 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
+/**
+ * The AES Utility to encrypt the connection.
+ * Encryption Mode: AES GCM 256
+ */
 public class AES {
     public static final int AES_KEY_SIZE = 256;
     public static final int GCM_IV_LENGTH = 12;

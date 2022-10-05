@@ -4,21 +4,11 @@ import javax.crypto.Cipher;
 import java.io.*;
 import java.security.*;
 
+/**
+ * The RSA Utility to encrypt the first handshake.
+ * Encryption Mode: RSA
+ */
 public class RSA {
-
-
-    public static byte[] decrypt(PrivateKey privateKey, String message) {
-        try {
-            // Open with private key
-            Cipher cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.DECRYPT_MODE, privateKey);
-            return cipher.doFinal(message.getBytes());
-
-        } catch (GeneralSecurityException e) {
-            e.printStackTrace();
-        }
-        return new byte[0];
-    }
 
     public static byte[] decrypt(PrivateKey privateKey, byte[] message) {
         try {
@@ -27,17 +17,6 @@ public class RSA {
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
             return cipher.doFinal(message);
 
-        } catch (GeneralSecurityException e) {
-            e.printStackTrace();
-        }
-        return new byte[0];
-    }
-
-    public static byte[] encrypt(PublicKey publicKey, String message) {
-        try {
-            Cipher cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-            return cipher.doFinal(message.getBytes());
         } catch (GeneralSecurityException e) {
             e.printStackTrace();
         }
@@ -62,9 +41,7 @@ public class RSA {
             keyIn = new ObjectInputStream(new FileInputStream(pubFile));
             publicKey = (PublicKey) keyIn.readObject();
             keyIn.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return publicKey;
@@ -78,9 +55,7 @@ public class RSA {
             keyIn = new ObjectInputStream(new FileInputStream(privFile));
             privateKey = (PrivateKey) keyIn.readObject();
             keyIn.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return privateKey;
@@ -98,9 +73,7 @@ public class RSA {
             out = new ObjectOutputStream(new FileOutputStream(privateKeyFileName));
             out.writeObject(keyPair.getPrivate());
             out.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (GeneralSecurityException e) {
+        } catch (IOException | GeneralSecurityException e) {
             e.printStackTrace();
         }
     }

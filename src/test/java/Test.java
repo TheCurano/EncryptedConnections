@@ -1,6 +1,12 @@
-package de.pterocloud.encryptedconnection;
+import de.pterocloud.encryptedconnection.*;
+import de.pterocloud.encryptedconnection.crypto.AES;
+import de.pterocloud.encryptedconnection.crypto.RSA;
 
-public class Main {
+import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.security.KeyPair;
+
+public class Test {
 
     public static void main(String[] args) {
         try {
@@ -28,7 +34,6 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Thread.currentThread().stop();
     }
 
 }
