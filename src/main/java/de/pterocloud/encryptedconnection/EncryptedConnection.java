@@ -88,14 +88,7 @@ public class EncryptedConnection {
         send(packet.serialize());
     }
 
-    /*public byte[] receive() throws Exception {
-        socket.setSoTimeout(60000);
-        DataInputStream in = new DataInputStream(socket.getInputStream());
-        byte[] bytes = Base64.getDecoder().decode(in.readUTF());
-        return AES.decrypt(bytes, aes, iv);
-    }*/
-
-    public Packet receive() throws Exception {
+    protected Packet receive() throws Exception {
         socket.setSoTimeout(60000);
         DataInputStream in = new DataInputStream(socket.getInputStream());
         byte[] bytes = Base64.getDecoder().decode(in.readUTF());
