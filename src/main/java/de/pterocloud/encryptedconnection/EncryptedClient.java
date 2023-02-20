@@ -82,6 +82,10 @@ public class EncryptedClient {
         return encryptedConnection;
     }
 
+    public void disconnect() throws IOException {
+        socket.close();
+    }
+    
     @Deprecated
     public Socket getSocket() {
         return socket;
