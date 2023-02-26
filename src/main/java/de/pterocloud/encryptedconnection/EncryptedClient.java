@@ -10,10 +10,14 @@ import java.util.Base64;
 
 public class EncryptedClient {
 
-    protected KeyPair rsa = RSA.generateRSAKey(4096);
-    protected String host;
-    protected int port;
+    protected final KeyPair rsa = RSA.generateRSAKey(4096);
+
+    protected final String host;
+
+    protected final int port;
+
     protected Socket socket = null;
+
     protected EncryptedConnection encryptedConnection = null;
 
     public EncryptedClient(String host, int port) {
@@ -23,6 +27,7 @@ public class EncryptedClient {
 
     /**
      * Not encrypted send
+     *
      * @param bytes
      * @throws IOException
      */
@@ -34,6 +39,7 @@ public class EncryptedClient {
 
     /**
      * Not encrypted receive
+     *
      * @return byte[]
      * @throws IOException
      */
@@ -46,6 +52,7 @@ public class EncryptedClient {
 
     /**
      * Connects the client to the encrypted Server
+     *
      * @return EncryptedClient
      * @throws IOException
      * @throws ClassNotFoundException
@@ -56,9 +63,9 @@ public class EncryptedClient {
         socket.setKeepAlive(true);
 
         // Sending and receiving required packets for the Encryption
-        send(new Packet(rsa.getPublic(), (byte) 0).serialize());
-        Packet aesPacket = Packet.deserialize(receive());
-        Packet iv = Packet.deserialize(receive());
+        send(new Packet<>(rsa.getPublic(), (byte) 0).serialize());
+        Packet<?> aesPacket = Packet.deserialize(receive());
+        Packet<?> iv = Packet.deserialize(receive());
 
         // Decrypting received packets
         byte[] decryptedAESKey = RSA.decrypt(rsa.getPrivate(), Base64.getDecoder().decode((String) aesPacket.getObject()));
@@ -66,8 +73,8 @@ public class EncryptedClient {
         ObjectInputStream dataInput = new ObjectInputStream(inputStream);
         SecretKey aesKey = (SecretKey) dataInput.readObject();
         dataInput.close();
-        aesPacket = new Packet(aesKey, (byte) 0);
-        iv = new Packet(RSA.decrypt(rsa.getPrivate(), Base64.getDecoder().decode((String) iv.getObject())), (byte) 0);
+        aesPacket = new Packet<>(aesKey, (byte) 0);
+        iv = new Packet<>(RSA.decrypt(rsa.getPrivate(), Base64.getDecoder().decode((String) iv.getObject())), (byte) 0);
 
         if (aesPacket.getType() != (byte) 0 && iv.getType() != (byte) 0) {
             throw new RuntimeException("Invalid init packets.");
@@ -85,7 +92,7 @@ public class EncryptedClient {
     public void disconnect() throws IOException {
         socket.close();
     }
-    
+
     @Deprecated
     public Socket getSocket() {
         return socket;

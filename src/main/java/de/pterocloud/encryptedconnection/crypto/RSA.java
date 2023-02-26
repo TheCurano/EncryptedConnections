@@ -61,11 +61,11 @@ public class RSA {
         return privateKey;
     }
 
-    public static void generateRSAKeyToFile(String privateKeyFileName, String publicKeyFileName, Integer KEYSIZE) {
+    public static void generateRSAKeyToFile(String privateKeyFileName, String publicKeyFileName, int length) {
         try {
             KeyPairGenerator pairgen = KeyPairGenerator.getInstance("RSA");
             SecureRandom random = new SecureRandom();
-            pairgen.initialize(KEYSIZE, random);
+            pairgen.initialize(length, random);
             KeyPair keyPair = pairgen.generateKeyPair();
             ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(publicKeyFileName));
             out.writeObject(keyPair.getPublic());
@@ -78,18 +78,17 @@ public class RSA {
         }
     }
 
-    public static KeyPair generateRSAKey(Integer KEYSIZE) {
+    public static KeyPair generateRSAKey(int length) {
         KeyPair keyPair = null;
         try {
             KeyPairGenerator pairgen = KeyPairGenerator.getInstance("RSA");
             SecureRandom random = new SecureRandom();
-            pairgen.initialize(KEYSIZE, random);
+            pairgen.initialize(length, random);
             keyPair = pairgen.generateKeyPair();
         } catch (GeneralSecurityException e) {
             e.printStackTrace();
         }
         return keyPair;
     }
-
 
 }

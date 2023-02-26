@@ -4,27 +4,27 @@ import java.io.*;
 import java.util.Base64;
 
 /**
- * The Packet which will be transfered.
+ * The Packet which is sent over the connection
  */
-public class Packet implements Serializable {
+public class Packet<T> implements Serializable {
 
     private byte type = (byte) 3;
 
-    private final Object object;
+    private final T object;
 
     public byte getType() {
         return type;
     }
 
-    public Object getObject() {
+    public T getObject() {
         return object;
     }
 
-    public Packet(Object object) {
+    public Packet(T object) {
         this.object = object;
     }
 
-    public Packet(Object object, byte type) {
+    public Packet(T object, byte type) {
         this.object = object;
         this.type = type;
     }
@@ -37,10 +37,10 @@ public class Packet implements Serializable {
         return Base64.getEncoder().encode(outputStream.toByteArray());
     }
 
-    public static Packet deserialize(byte[] bytes) throws IOException, ClassNotFoundException, ClassCastException {
+    public static Packet<?> deserialize(byte[] bytes) throws IOException, ClassNotFoundException, ClassCastException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64.getDecoder().decode(bytes));
         ObjectInputStream dataInput = new ObjectInputStream(inputStream);
-        Packet packet = (Packet) dataInput.readObject();
+        Packet<?> packet = (Packet<?>) dataInput.readObject();
         dataInput.close();
         return packet;
     }
