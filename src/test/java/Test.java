@@ -51,26 +51,10 @@ public class Test {
                 System.out.println("Nice shit");
             }
 
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-//        try {
-//            System.out.println("Before: " + System.currentTimeMillis());
-//            SecretKey key = AES.generateKey();
-//            byte[] iv = AES.generateIV();
-//            System.out.println("A: " + System.currentTimeMillis());
-//            byte[] encrypted =  AES.encrypt("test".getBytes(StandardCharsets.UTF_8), key, iv);
-//            System.out.println("B: " + System.currentTimeMillis());
-//            String encrypted_str = Base64.getEncoder().encodeToString(encrypted);
-//            System.out.println("C: " + System.currentTimeMillis());
-//            byte[] decrypted = Base64.getDecoder().decode(encrypted_str);
-//            System.out.println("D: " + System.currentTimeMillis());
-//            String str = new String(AES.decrypt(decrypted, key, iv), StandardCharsets.UTF_8);
-//            System.out.println("E: " + System.currentTimeMillis());
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+
     }
 
 }
