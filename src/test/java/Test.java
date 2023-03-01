@@ -45,10 +45,9 @@ public class Test {
                 }
             });
             Packet<String> packet = new Packet<>("TEST");
-            System.out.println("Started time: " + System.currentTimeMillis());
             client01.getEncryptedConnection().send(packet);
             if (client01.getEncryptedConnection().isConnected()) {
-                System.out.println("Nice shit");
+                System.out.println("[Server] Connection established");
             }
 
         } catch (Exception e) {
