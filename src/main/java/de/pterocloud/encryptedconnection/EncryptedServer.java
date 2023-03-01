@@ -2,6 +2,7 @@ package de.pterocloud.encryptedconnection;
 
 import de.pterocloud.encryptedconnection.crypto.AES;
 import de.pterocloud.encryptedconnection.crypto.RSA;
+import de.pterocloud.encryptedconnection.listener.ServerListener;
 
 import javax.crypto.SecretKey;
 import java.io.*;
@@ -15,12 +16,21 @@ import java.util.List;
 public class EncryptedServer {
 
     private final int port;
+
+    private ServerListener listener;
+
     private ServerSocket server = null;
+
     private final ArrayList<EncryptedConnection> encryptedConnections = new ArrayList<>();
+
     private final Thread connectionThread = new Thread(() -> {
         while (server != null && !server.isClosed()) {
             try {
                 Socket socket = server.accept();
+                if (!listener.onPreConnect(socket)) {
+                    socket.close();
+                    continue;
+                }
                 Thread connectionThread = new Thread(() -> {
                     try {
                         Packet packet = Packet.deserialize(receive(socket));
@@ -41,7 +51,10 @@ public class EncryptedServer {
 
                         send(socket, aesPacket.serialize());
                         send(socket, ivPacket.serialize());
-                        encryptedConnections.add(new EncryptedConnection(socket, this, aes, iv, publicKey));
+                        //EncryptedConnection encryptedConnection = new EncryptedConnection(socket, this, aes, iv, publicKey);
+                        EncryptedConnection encryptedConnection = new EncryptedConnection(socket, null, aes, iv);
+                        encryptedConnections.add(encryptedConnection);
+                        listener.onPostConnect(encryptedConnection.getClient(), encryptedConnection);
                     } catch (IOException | ClassNotFoundException e) {
                         throw new RuntimeException(e);
                     }
@@ -56,6 +69,8 @@ public class EncryptedServer {
 
     public EncryptedServer(int port) {
         this.port = port;
+        this.listener = new ServerListener() {
+        };
     }
 
     public EncryptedServer start() throws IOException {
@@ -64,16 +79,21 @@ public class EncryptedServer {
         return this;
     }
 
-    private void startConnectionThread() {
-        if (!connectionThread.isAlive()) connectionThread.start();
-    }
-
     public void stop() {
         try {
             server.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public EncryptedServer listener(ServerListener listener) {
+        this.listener = listener;
+        return this;
+    }
+
+    private void startConnectionThread() {
+        if (!connectionThread.isAlive()) connectionThread.start();
     }
 
     protected void send(Socket socket, byte[] bytes) throws IOException {
@@ -93,10 +113,6 @@ public class EncryptedServer {
 
     public List<EncryptedConnection> getEncryptedConnections() {
         return encryptedConnections;
-    }
-
-    public void setEventListener() {
-
     }
 
 }

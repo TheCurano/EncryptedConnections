@@ -1,6 +1,8 @@
 package de.pterocloud.encryptedconnection;
 
 import de.pterocloud.encryptedconnection.crypto.AES;
+import de.pterocloud.encryptedconnection.listener.ClientListener;
+import de.pterocloud.encryptedconnection.listener.ServerListener;
 
 import javax.crypto.SecretKey;
 import java.io.DataInputStream;
@@ -12,56 +14,37 @@ import java.util.Base64;
 
 public class EncryptedConnection {
 
-    private PublicKey publicKey = null;
+    //private PublicKey publicKey = null;
     private EncryptedClient client = null;
-    private EncryptedServer server = null;
-    private SecretKey aes = null;
-    private byte[] iv = null;
-    private Socket socket = null;
-    private ServerListener packetListener = null;
+    //private EncryptedServer server = null;
+    private final SecretKey aes;
+    private final byte[] iv;
+    private final Socket socket;
+    private ClientListener listener = new ClientListener() {
+    };
 
     public EncryptedConnection(Socket socket, EncryptedClient client, SecretKey aes, byte[] iv) {
         this.client = client;
         this.socket = socket;
         this.aes = aes;
         this.iv = iv;
-
-        Thread packetListener = new Thread(() -> {
-            while (socket.isConnected()) {
-                try {
-                    Packet packet = receive();
-                    if (getPacketListener() != null && getPacketListener().getPacketReceived() != null) {
-                        getPacketListener().onPacketReceived(this, packet);
-                    }
-                } catch (Exception e) {
-                    if (e instanceof SocketTimeoutException) {
-                        if (isConnected()) {
-                            continue;
-                        } else {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                    e.printStackTrace();
-                }
-            }
-        });
-        packetListener.start();
+        setupListener();
     }
 
-    public EncryptedConnection(Socket socket, EncryptedServer server, SecretKey aes, byte[] iv, PublicKey publicKey) {
-        this.server = server;
-        this.socket = socket;
-        this.aes = aes;
-        this.iv = iv;
-        this.publicKey = publicKey;
+//    public EncryptedConnection(Socket socket, EncryptedServer server, SecretKey aes, byte[] iv, PublicKey publicKey) {
+//        this.server = server;
+//        this.socket = socket;
+//        this.aes = aes;
+//        this.iv = iv;
+//        this.publicKey = publicKey;
+//        setupListener();
+//    }
 
+    private void setupListener() {
         Thread packetListener = new Thread(() -> {
             while (socket.isConnected()) {
                 try {
-                    Packet packet = receive();
-                    if (getPacketListener() != null && getPacketListener().getPacketReceived() != null) {
-                        getPacketListener().onPacketReceived(this, packet);
-                    }
+                    getListener().onPacketReceived(receive());
                 } catch (Exception e) {
                     if (e instanceof SocketTimeoutException) {
                         if (isConnected()) {
@@ -107,13 +90,13 @@ public class EncryptedConnection {
         return socket != null && socket.isConnected();
     }
 
-    public EncryptedConnection setPacketListener(ServerListener packetListener) {
-        this.packetListener = packetListener;
+    public EncryptedConnection listener(ClientListener listener) {
+        this.listener = listener;
         return this;
     }
 
-    public ServerListener getPacketListener() {
-        return packetListener;
+    public ClientListener getListener() {
+        return listener;
     }
 
 }

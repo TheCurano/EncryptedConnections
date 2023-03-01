@@ -11,8 +11,11 @@ import java.security.SecureRandom;
  * Encryption Mode: AES GCM 256
  */
 public class AES {
+
     public static final int AES_KEY_SIZE = 256;
+
     public static final int GCM_IV_LENGTH = 12;
+
     public static final int GCM_TAG_LENGTH = 16;
 
     public static SecretKey generateKey() {
@@ -38,16 +41,15 @@ public class AES {
         SecretKeySpec keySpec = new SecretKeySpec(key.getEncoded(), "AES");
         GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, IV);
         cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmParameterSpec);
-        byte[] cipherText = cipher.doFinal(plaintext);
-        return cipherText;
+        return cipher.doFinal(plaintext);
     }
 
-    public static byte[] decrypt(byte[] cipherText, SecretKey key, byte[] IV) throws Exception{
+    public static byte[] decrypt(byte[] cipherText, SecretKey key, byte[] IV) throws Exception {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         SecretKeySpec keySpec = new SecretKeySpec(key.getEncoded(), "AES");
         GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, IV);
         cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmParameterSpec);
-        byte[] decryptedText = cipher.doFinal(cipherText);
-        return decryptedText;
+        return cipher.doFinal(cipherText);
     }
+
 }
