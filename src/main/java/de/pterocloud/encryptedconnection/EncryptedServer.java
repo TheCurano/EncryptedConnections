@@ -23,7 +23,7 @@ public class EncryptedServer {
 
     private final ArrayList<EncryptedConnection> encryptedConnections = new ArrayList<>();
 
-    private final Thread connectionThread = new Thread(() -> {
+    private final Thread serverThread = new Thread(() -> {
         while (server != null && !server.isClosed()) {
             try {
                 Socket socket = server.accept();
@@ -51,10 +51,18 @@ public class EncryptedServer {
 
                         send(socket, aesPacket.serialize());
                         send(socket, ivPacket.serialize());
-                        //EncryptedConnection encryptedConnection = new EncryptedConnection(socket, this, aes, iv, publicKey);
+                        // EncryptedConnection encryptedConnection = new EncryptedConnection(socket, this, aes, iv, publicKey);
                         EncryptedConnection encryptedConnection = new EncryptedConnection(socket, null, aes, iv);
                         encryptedConnections.add(encryptedConnection);
                         listener.onPostConnect(encryptedConnection.getClient(), encryptedConnection);
+                        try {
+                            while (socket.isConnected()) {
+                                Packet receivedPacket = encryptedConnection.receive();
+                                listener.onPacketReceived(encryptedConnection, receivedPacket);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } catch (IOException | ClassNotFoundException e) {
                         throw new RuntimeException(e);
                     }
@@ -75,7 +83,7 @@ public class EncryptedServer {
 
     public EncryptedServer start() throws IOException {
         server = new ServerSocket(port);
-        startConnectionThread();
+        startServerThread();
         return this;
     }
 
@@ -92,8 +100,8 @@ public class EncryptedServer {
         return this;
     }
 
-    private void startConnectionThread() {
-        if (!connectionThread.isAlive()) connectionThread.start();
+    private void startServerThread() {
+        if (!serverThread.isAlive()) serverThread.start();
     }
 
     protected void send(Socket socket, byte[] bytes) throws IOException {
