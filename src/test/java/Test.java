@@ -21,7 +21,7 @@ public class Test {
             server.listener(new ServerListener() {
                 @Override
                 public void onPacketReceived(EncryptedConnection connection, Packet<?> packet) {
-                    System.out.println("[Server] received packet: " + packet.getObject());
+                    System.out.println("[Server] Received packet: " + packet.getObject());
                 }
 
                 @Override

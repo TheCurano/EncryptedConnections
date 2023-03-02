@@ -55,15 +55,11 @@ public class EncryptedServer {
                         EncryptedConnection encryptedConnection = new EncryptedConnection(socket, null, aes, iv);
                         encryptedConnections.add(encryptedConnection);
                         listener.onPostConnect(encryptedConnection.getClient(), encryptedConnection);
-                        try {
-                            while (socket.isConnected()) {
-                                Packet receivedPacket = encryptedConnection.receive();
-                                listener.onPacketReceived(encryptedConnection, receivedPacket);
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        while (socket.isConnected()) {
+                            Packet receivedPacket = encryptedConnection.receive();
+                            listener.onPacketReceived(encryptedConnection, receivedPacket);
                         }
-                    } catch (IOException | ClassNotFoundException e) {
+                    } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                 });
