@@ -19,7 +19,6 @@ public interface ServerListener {
      * @param packet     the packet
      */
     default void onPacketReceived(EncryptedConnection connection, Packet<?> packet) {
-
     }
 
     /**
@@ -39,7 +38,6 @@ public interface ServerListener {
      * @param connection the connection
      */
     default void onPostConnect(EncryptedClient client, EncryptedConnection connection) {
-
     }
 
 }

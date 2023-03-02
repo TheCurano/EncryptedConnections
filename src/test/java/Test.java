@@ -1,15 +1,11 @@
-import de.pterocloud.encryptedconnection.*;
-import de.pterocloud.encryptedconnection.crypto.AES;
-import de.pterocloud.encryptedconnection.crypto.RSA;
+import de.pterocloud.encryptedconnection.EncryptedClient;
+import de.pterocloud.encryptedconnection.EncryptedConnection;
+import de.pterocloud.encryptedconnection.EncryptedServer;
+import de.pterocloud.encryptedconnection.Packet;
 import de.pterocloud.encryptedconnection.listener.ClientListener;
 import de.pterocloud.encryptedconnection.listener.ServerListener;
 
-import javax.crypto.SecretKey;
-import java.io.IOException;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyPair;
-import java.util.Base64;
 
 public class Test {
 
@@ -17,8 +13,7 @@ public class Test {
 
         try {
             EncryptedServer server = new EncryptedServer(62411);
-            server.start();
-            server.listener(new ServerListener() {
+            server.start().listener(new ServerListener() {
                 @Override
                 public void onPacketReceived(EncryptedConnection connection, Packet<?> packet) {
                     System.out.println("[Server] Received packet: " + packet.getObject());
@@ -33,6 +28,11 @@ public class Test {
                 @Override
                 public void onPostConnect(EncryptedClient client, EncryptedConnection connection) {
                     System.out.println("[Server] PostConnect");
+                    try {
+                        connection.send(new Packet<>("TEST"));
+                    } catch (Exception exception) {
+                        throw new RuntimeException(exception);
+                    }
                 }
             });
 
@@ -44,16 +44,22 @@ public class Test {
                     System.out.println("[Client] Received packet: " + packet.getObject());
                 }
             });
-            Packet<String> packet = new Packet<>("TEST");
-            client01.getEncryptedConnection().send(packet);
+
+            client01.getEncryptedConnection().send(new Packet<>("TEST"));
             if (client01.getEncryptedConnection().isConnected()) {
                 System.out.println("[Server] Connection established");
             }
+            server.getEncryptedConnections().forEach(con -> {
+                try {
+                    con.send(new Packet<>("Big baba boom"));
+                } catch (Exception exception) {
+                    throw new RuntimeException(exception);
+                }
+            });
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception exception) {
+            exception.printStackTrace();
         }
-
     }
 
 }

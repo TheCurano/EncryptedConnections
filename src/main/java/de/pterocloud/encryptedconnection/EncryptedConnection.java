@@ -2,25 +2,24 @@ package de.pterocloud.encryptedconnection;
 
 import de.pterocloud.encryptedconnection.crypto.AES;
 import de.pterocloud.encryptedconnection.listener.ClientListener;
-import de.pterocloud.encryptedconnection.listener.ServerListener;
 
 import javax.crypto.SecretKey;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.net.Socket;
-import java.net.SocketException;
+
 import java.net.SocketTimeoutException;
-import java.security.PublicKey;
+
 import java.util.Base64;
 
 public class EncryptedConnection {
 
-    //private PublicKey publicKey = null;
     private EncryptedClient client = null;
-    //private EncryptedServer server = null;
+
     private final SecretKey aes;
+
     private final byte[] iv;
+
     private final Socket socket;
     private ClientListener listener = new ClientListener() {
     };
@@ -33,33 +32,23 @@ public class EncryptedConnection {
         setupListener();
     }
 
-//    public EncryptedConnection(Socket socket, EncryptedServer server, SecretKey aes, byte[] iv, PublicKey publicKey) {
-//        this.server = server;
-//        this.socket = socket;
-//        this.aes = aes;
-//        this.iv = iv;
-//        this.publicKey = publicKey;
-//        setupListener();
-//    }
-
     private void setupListener() {
-        Thread packetListener = new Thread(() -> {
+        new Thread(() -> {
             while (socket.isConnected()) {
                 try {
                     getListener().onPacketReceived(receive());
-                } catch (Exception e) {
-                    if (e instanceof SocketTimeoutException) {
+                } catch (Exception exception) {
+                    if (exception instanceof SocketTimeoutException) {
                         if (isConnected()) {
                             continue;
                         } else {
-                            throw new RuntimeException(e);
+                            throw new RuntimeException(exception);
                         }
                     }
-                    e.printStackTrace();
+                    exception.printStackTrace();
                 }
             }
-        });
-        packetListener.start();
+        }).start();
     }
 
     public void send(byte[] bytes) throws Exception {
@@ -69,11 +58,11 @@ public class EncryptedConnection {
         out.flush();
     }
 
-    public void send(Packet packet) throws Exception {
+    public void send(Packet<?> packet) throws Exception {
         send(packet.serialize());
     }
 
-    protected Packet receive() throws Exception {
+    protected Packet<?> receive() throws Exception {
         socket.setSoTimeout(60000);
         DataInputStream in = new DataInputStream(socket.getInputStream());
         byte[] bytes = Base64.getDecoder().decode(in.readUTF());

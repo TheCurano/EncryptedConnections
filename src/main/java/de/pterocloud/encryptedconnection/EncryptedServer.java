@@ -31,9 +31,9 @@ public class EncryptedServer {
                     socket.close();
                     continue;
                 }
-                Thread connectionThread = new Thread(() -> {
+                new Thread(() -> {
                     try {
-                        Packet packet = Packet.deserialize(receive(socket));
+                        Packet<?> packet = Packet.deserialize(receive(socket));
                         PublicKey publicKey = (PublicKey) packet.getObject();
                         SecretKey aes = AES.generateKey();
                         byte[] iv = AES.generateIV();
@@ -44,10 +44,10 @@ public class EncryptedServer {
                         dataOutput.close();
 
                         byte[] aesKeyEncrypted = RSA.encrypt(publicKey, Base64.getEncoder().encode(outputStream.toByteArray()));
-                        Packet aesPacket = new Packet(Base64.getEncoder().encodeToString(aesKeyEncrypted), (byte) 0);
+                        Packet<?> aesPacket = new Packet<>(Base64.getEncoder().encodeToString(aesKeyEncrypted), (byte) 0);
 
                         byte[] ivEncrypted = RSA.encrypt(publicKey, iv);
-                        Packet ivPacket = new Packet(Base64.getEncoder().encodeToString(ivEncrypted), (byte) 0);
+                        Packet<?> ivPacket = new Packet<>(Base64.getEncoder().encodeToString(ivEncrypted), (byte) 0);
 
                         send(socket, aesPacket.serialize());
                         send(socket, ivPacket.serialize());
@@ -56,16 +56,15 @@ public class EncryptedServer {
                         encryptedConnections.add(encryptedConnection);
                         listener.onPostConnect(encryptedConnection.getClient(), encryptedConnection);
                         while (socket.isConnected()) {
-                            Packet receivedPacket = encryptedConnection.receive();
-                            listener.onPacketReceived(encryptedConnection, receivedPacket);
+                            Packet<?> pv = encryptedConnection.receive();
+                            listener.onPacketReceived(encryptedConnection, pv);
                         }
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
+                    } catch (Exception exception) {
+                        throw new RuntimeException(exception);
                     }
-                });
-                connectionThread.start();
-            } catch (Exception e) {
-                e.printStackTrace();
+                }).start();
+            } catch (Exception exception) {
+                exception.printStackTrace();
             }
             encryptedConnections.removeIf(connection -> !connection.getSocket().isConnected());
         }
@@ -104,15 +103,12 @@ public class EncryptedServer {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
         out.writeUTF(Base64.getEncoder().encodeToString(bytes));
         out.flush();
-        //out.close();
     }
 
     protected byte[] receive(Socket socket) throws IOException {
         socket.setSoTimeout(60000);
         DataInputStream in = new DataInputStream(socket.getInputStream());
-        byte[] bytes = Base64.getDecoder().decode(in.readUTF());
-        //in.close();
-        return bytes;
+        return Base64.getDecoder().decode(in.readUTF());
     }
 
     public List<EncryptedConnection> getEncryptedConnections() {
