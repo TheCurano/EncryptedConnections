@@ -51,13 +51,6 @@ public class Test {
             if (client01.getEncryptedConnection().isConnected()) {
                 System.out.println("[Server] Connection established");
             }
-            server.getEncryptedConnections().forEach(con -> {
-                try {
-                    con.send(new Packet<>("Big baba boom"));
-                } catch (Exception exception) {
-                    throw new RuntimeException(exception);
-                }
-            });
 
             client01.getEncryptedConnection().send(new Packet<>("TEST"));
 

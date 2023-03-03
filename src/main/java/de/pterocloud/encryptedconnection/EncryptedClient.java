@@ -40,9 +40,18 @@ public class EncryptedClient {
      * @throws IOException
      */
     protected void send(byte[] bytes) throws IOException {
-        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-        out.writeUTF(Base64.getEncoder().encodeToString(bytes));
-        out.flush();
+        try {
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            out.writeUTF(Base64.getEncoder().encodeToString(bytes));
+            out.flush();
+        } catch (Exception exception) {
+            getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -53,9 +62,7 @@ public class EncryptedClient {
      */
     protected byte[] receive() throws IOException {
         socket.setSoTimeout(60000);
-        DataInputStream in = new DataInputStream(socket.getInputStream());
-
-        return Base64.getDecoder().decode(in.readUTF());
+        return Base64.getDecoder().decode(new DataInputStream(socket.getInputStream()).readUTF());
     }
 
     /**
@@ -94,7 +101,13 @@ public class EncryptedClient {
         new Thread(() -> {
             while (socket.isConnected()) {
                 try {
-                    getListener().onPacketReceived(getEncryptedConnection().receive());
+                    Packet<?> packet = getEncryptedConnection().receive();
+                    if (packet.getType() == (byte) 1) {
+                        getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
+                        socket.close();
+                        break;
+                    }
+                    getListener().onPacketReceived(packet);
                 } catch (Exception exception) {
                     if (exception instanceof SocketTimeoutException && getEncryptedConnection().isConnected()) continue;
                     exception.printStackTrace();
@@ -109,7 +122,8 @@ public class EncryptedClient {
         return encryptedConnection;
     }
 
-    public void disconnect() throws IOException {
+    public void disconnect() throws Exception {
+        getEncryptedConnection().send(new Packet<>(null, (byte) 1));
         getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
         socket.close();
     }

@@ -59,6 +59,11 @@ public class EncryptedServer {
                         while (socket.isConnected()) {
                             try {
                                 Packet<?> pv = encryptedConnection.receive();
+                                if (pv.getType() == 1) {
+                                    encryptedConnections.remove(encryptedConnection);
+                                    listener.onDisconnect(encryptedConnection.getClient(), encryptedConnection);
+                                    break;
+                                }
                                 listener.onPacketReceived(encryptedConnection, pv);
                             } catch (SocketTimeoutException exception) {
                                 encryptedConnections.remove(encryptedConnection);
@@ -85,12 +90,13 @@ public class EncryptedServer {
 
     public EncryptedServer start() throws IOException {
         server = new ServerSocket(port);
-        startServerThread();
+        serverThread.start();
         return this;
     }
 
     public void stop() {
         try {
+            disconnectAll();
             server.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -100,10 +106,6 @@ public class EncryptedServer {
     public EncryptedServer listener(ServerListener listener) {
         this.listener = listener;
         return this;
-    }
-
-    private void startServerThread() {
-        if (!serverThread.isAlive()) serverThread.start();
     }
 
     protected void send(Socket socket, byte[] bytes) throws IOException {
@@ -120,6 +122,20 @@ public class EncryptedServer {
 
     public List<EncryptedConnection> getEncryptedConnections() {
         return encryptedConnections;
+    }
+
+    public void disconnectClient(EncryptedConnection encryptedConnection) {
+        try {
+            encryptedConnection.send(new Packet<>(null, (byte) 1));
+            encryptedConnection.getSocket().close();
+        } catch (Exception ignored) {
+        }
+
+        encryptedConnections.remove(encryptedConnection);
+    }
+
+    public void disconnectAll() {
+        encryptedConnections.forEach(this::disconnectClient);
     }
 
 }
