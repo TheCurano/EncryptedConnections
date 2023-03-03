@@ -11,7 +11,7 @@ public class Test {
 
     public static void main(String[] args) {
         final int[] succeededActions = {0};
-        long start = System.currentTimeMillis();
+        final long[] start = {System.currentTimeMillis()};
 
         try {
             EncryptedServer server = new EncryptedServer(62411);
@@ -20,6 +20,7 @@ public class Test {
                 public void onPacketReceived(EncryptedConnection connection, Packet<?> packet) {
                     succeededActions[0]++;
                     System.out.println("[Server] Received packet: " + packet.getObject());
+                    if (succeededActions[0] == 2) start[0] = System.currentTimeMillis();
                 }
 
                 @Override
@@ -39,26 +40,27 @@ public class Test {
                 }
             });
 
-            EncryptedClient client01 = new EncryptedClient("0.0.0.0", 62411);
-            client01.connect();
-            client01.listener(new ClientListener() {
+            EncryptedClient client = new EncryptedClient("0.0.0.0", 62411);
+            client.connect();
+            client.listener(new ClientListener() {
                 @Override
                 public void onPacketReceived(Packet<?> packet) {
                     System.out.println("[Client] Received packet: " + packet.getObject());
                     succeededActions[0]++;
                 }
             });
-            if (client01.getEncryptedConnection().isConnected()) {
+            if (client.getEncryptedConnection().isConnected()) {
                 System.out.println("[Server] Connection established");
             }
 
-            client01.getEncryptedConnection().send(new Packet<>("TEST (to server)"));
+            client.getEncryptedConnection().send(new Packet<>("TEST (to server)"));
 
-            Thread.sleep(500);
+            Thread.sleep(300); // Wait for the packets to be sent
+
             if (succeededActions[0] == 2) {
-                System.out.println("Test succeeded in (" + (System.currentTimeMillis() - start) + "ms)");
+                System.out.println("Test succeeded in (" + (System.currentTimeMillis() - start[0]) + "ms)");
             } else {
-                System.out.println("Test failed in (" + (System.currentTimeMillis() - start) + "ms)");
+                System.out.println("Test failed in (" + (System.currentTimeMillis() - start[0]) + "ms)");
             }
 
         } catch (Exception exception) {
