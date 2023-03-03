@@ -68,7 +68,8 @@ public class EncryptedClient {
      * @throws IOException
      */
     protected byte[] receive() throws IOException {
-        socket.setSoTimeout(60000);
+        //if (autoReconnect) socket.setSoTimeout(Integer.MAX_VALUE);
+        //else socket.setSoTimeout(60000);
         return Base64.getDecoder().decode(new DataInputStream(socket.getInputStream()).readUTF());
     }
 
@@ -83,6 +84,9 @@ public class EncryptedClient {
         // Connecting
         socket = new Socket(host, port);
         socket.setKeepAlive(true);
+
+//        if (autoReconnect) socket.setSoTimeout(Integer.MAX_VALUE);
+//        else socket.setSoTimeout(60000);
 
         // Sending and receiving required packets for the Encryption
         send(new Packet<>(rsa.getPublic(), (byte) 0).serialize());
@@ -104,7 +108,6 @@ public class EncryptedClient {
 
         // Creating EncryptedConnection
         encryptedConnection = new EncryptedConnection(socket, (SecretKey) aesPacket.getObject(), (byte[]) iv.getObject());
-
         new Thread(() -> {
             while (socket.isConnected()) {
                 try {
