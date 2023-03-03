@@ -1,7 +1,6 @@
 package de.pterocloud.encryptedconnection;
 
 import de.pterocloud.encryptedconnection.crypto.AES;
-import de.pterocloud.encryptedconnection.listener.ClientListener;
 
 import javax.crypto.SecretKey;
 import java.io.DataInputStream;

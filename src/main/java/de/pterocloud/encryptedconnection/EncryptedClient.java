@@ -20,15 +20,17 @@ public class EncryptedClient {
 
     protected final int port;
 
-    protected Socket socket = null;
+    protected Socket socket;
 
-    protected EncryptedConnection encryptedConnection = null;
+    protected EncryptedConnection encryptedConnection;
 
     protected ClientListener listener;
 
     public EncryptedClient(String host, int port) {
         this.host = host;
         this.port = port;
+        this.listener = new ClientListener() {
+        };
     }
 
     /**
@@ -99,6 +101,7 @@ public class EncryptedClient {
                 }
             }
         }).start();
+        getListener().onConnect(new InetSocketAddress(InetAddress.getByName(host), port));
         return this;
     }
 
