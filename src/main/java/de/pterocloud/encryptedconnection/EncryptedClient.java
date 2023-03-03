@@ -108,7 +108,7 @@ public class EncryptedClient {
         }
 
         // Creating EncryptedConnection
-        encryptedConnection = new EncryptedConnection(socket, this, (SecretKey) aesPacket.getObject(), (byte[]) iv.getObject());
+        encryptedConnection = new EncryptedConnection(socket, (SecretKey) aesPacket.getObject(), (byte[]) iv.getObject());
 
         new Thread(() -> {
             while (socket.isConnected()) {

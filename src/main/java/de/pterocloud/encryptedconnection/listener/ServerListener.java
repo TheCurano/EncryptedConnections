@@ -24,7 +24,7 @@ public interface ServerListener {
      * @param client     the client
      * @param connection the connection
      */
-    default void onPostConnect(EncryptedClient client, EncryptedConnection connection) {
+    default void onPostConnect(EncryptedConnection connection) {
 
     }
 
@@ -33,7 +33,7 @@ public interface ServerListener {
      *
      * @param connection the connection
      */
-    default void onDisconnect(EncryptedClient client, EncryptedConnection connection) {
+    default void onDisconnect(EncryptedConnection connection) {
 
     }
 

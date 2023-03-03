@@ -6,9 +6,7 @@ import de.pterocloud.encryptedconnection.listener.ServerListener;
 
 import javax.crypto.SecretKey;
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketTimeoutException;
+import java.net.*;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -53,21 +51,21 @@ public class EncryptedServer {
                         send(socket, aesPacket.serialize());
                         send(socket, ivPacket.serialize());
                         // EncryptedConnection encryptedConnection = new EncryptedConnection(socket, this, aes, iv, publicKey);
-                        EncryptedConnection encryptedConnection = new EncryptedConnection(socket, null, aes, iv);
+                        EncryptedConnection encryptedConnection = new EncryptedConnection(socket, aes, iv);
                         encryptedConnections.add(encryptedConnection);
-                        listener.onPostConnect(encryptedConnection.getClient(), encryptedConnection);
+                        listener.onPostConnect(encryptedConnection);
                         while (socket.isConnected()) {
                             try {
                                 Packet<?> pv = encryptedConnection.receive();
                                 if (pv.getType() == 1) {
                                     encryptedConnections.remove(encryptedConnection);
-                                    listener.onDisconnect(encryptedConnection.getClient(), encryptedConnection);
+                                    listener.onDisconnect(encryptedConnection);
                                     break;
                                 }
                                 listener.onPacketReceived(encryptedConnection, pv);
                             } catch (Exception exception) {
                                 encryptedConnections.remove(encryptedConnection);
-                                listener.onDisconnect(encryptedConnection.getClient(), encryptedConnection);
+                                listener.onDisconnect(encryptedConnection);
                                 break;
                             }
                         }
@@ -132,6 +130,21 @@ public class EncryptedServer {
         }
 
         encryptedConnections.remove(encryptedConnection);
+    }
+
+    public void send(EncryptedConnection client, Packet<?> packet) {
+        try {
+            if (client.getSocket() == null || !client.getSocket().isConnected())
+                throw new SocketTimeoutException("Socket is not connected");
+            client.send(packet.serialize());
+        } catch (Exception exception) {
+            listener.onDisconnect(client);
+            try {
+                client.getSocket().close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void disconnectAll() {

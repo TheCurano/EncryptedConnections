@@ -11,16 +11,13 @@ import java.util.Base64;
 
 public class EncryptedConnection {
 
-    private final EncryptedClient client;
-
     private final SecretKey aes;
 
     private final byte[] iv;
 
     private final Socket socket;
 
-    public EncryptedConnection(Socket socket, EncryptedClient client, SecretKey aes, byte[] iv) {
-        this.client = client;
+    public EncryptedConnection(Socket socket, SecretKey aes, byte[] iv) {
         this.socket = socket;
         this.aes = aes;
         this.iv = iv;
@@ -37,10 +34,6 @@ public class EncryptedConnection {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         byte[] bytes = Base64.getDecoder().decode(in.readUTF());
         return Packet.deserialize(AES.decrypt(bytes, aes, iv));
-    }
-
-    public EncryptedClient getClient() {
-        return client;
     }
 
     public Socket getSocket() {

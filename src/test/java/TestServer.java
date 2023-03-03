@@ -1,4 +1,3 @@
-import de.pterocloud.encryptedconnection.EncryptedClient;
 import de.pterocloud.encryptedconnection.EncryptedConnection;
 import de.pterocloud.encryptedconnection.EncryptedServer;
 import de.pterocloud.encryptedconnection.Packet;
@@ -20,12 +19,12 @@ public class TestServer {
                     }
 
                     @Override
-                    public void onPostConnect(EncryptedClient client, EncryptedConnection connection) {
+                    public void onPostConnect(EncryptedConnection connection) {
                         System.out.println("[Server] Client connected from " + connection.getSocket().getInetAddress().getHostAddress());
                     }
 
                     @Override
-                    public void onDisconnect(EncryptedClient client, EncryptedConnection connection) {
+                    public void onDisconnect(EncryptedConnection connection) {
                         System.out.println("[Server] Client disconnected from " + connection.getSocket().getInetAddress().getHostAddress());
                     }
 
