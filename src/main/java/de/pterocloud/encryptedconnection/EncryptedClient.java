@@ -110,16 +110,16 @@ public class EncryptedClient {
                 try {
                     Packet<?> packet = getEncryptedConnection().receive();
                     if (packet.getType() == (byte) 1) {
-                        getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
                         socket.close();
+                        getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
                         break;
                     }
                     getListener().onPacketReceived(packet);
                 } catch (Exception exception) {
                     if (exception instanceof SocketTimeoutException && getEncryptedConnection().isConnected()) continue;
                     try {
-                        //getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
                         socket.close();
+                        getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
                         break;
                     } catch (Exception e) {
                         throw new RuntimeException(e);

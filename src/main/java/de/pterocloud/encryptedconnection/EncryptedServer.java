@@ -138,12 +138,12 @@ public class EncryptedServer {
                 throw new SocketTimeoutException("Socket is not connected");
             client.send(packet.serialize());
         } catch (Exception exception) {
-            listener.onDisconnect(client);
             try {
                 client.getSocket().close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            listener.onDisconnect(client);
         }
     }
 
