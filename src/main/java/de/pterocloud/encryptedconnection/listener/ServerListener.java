@@ -1,6 +1,5 @@
 package de.pterocloud.encryptedconnection.listener;
 
-import de.pterocloud.encryptedconnection.EncryptedClient;
 import de.pterocloud.encryptedconnection.EncryptedConnection;
 import de.pterocloud.encryptedconnection.Packet;
 

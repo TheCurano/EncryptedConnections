@@ -5,7 +5,10 @@ import de.pterocloud.encryptedconnection.listener.ClientListener;
 
 import javax.crypto.SecretKey;
 import java.io.*;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.security.KeyPair;
 import java.util.Base64;
 
@@ -37,18 +40,9 @@ public class EncryptedClient {
      * @throws IOException
      */
     protected void send(byte[] bytes) throws IOException {
-        try {
-            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-            out.writeUTF(Base64.getEncoder().encodeToString(bytes));
-            out.flush();
-        } catch (Exception exception) {
-            getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
-            try {
-                socket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+        out.writeUTF(Base64.getEncoder().encodeToString(bytes));
+        out.flush();
     }
 
     public void send(Packet<?> packet) throws IOException {
