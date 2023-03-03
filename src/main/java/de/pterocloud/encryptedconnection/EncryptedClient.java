@@ -82,6 +82,7 @@ public class EncryptedClient {
 
         // Creating EncryptedConnection
         encryptedConnection = new EncryptedConnection(socket, this, (SecretKey) aesPacket.getObject(), (byte[]) iv.getObject());
+        encryptedConnection.setupListener();
         return this;
     }
 

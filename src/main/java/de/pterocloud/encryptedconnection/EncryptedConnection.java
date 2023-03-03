@@ -14,7 +14,7 @@ import java.util.Base64;
 
 public class EncryptedConnection {
 
-    private EncryptedClient client = null;
+    private final EncryptedClient client;
 
     private final SecretKey aes;
 
@@ -29,22 +29,15 @@ public class EncryptedConnection {
         this.socket = socket;
         this.aes = aes;
         this.iv = iv;
-        setupListener();
     }
 
-    private void setupListener() {
+    public void setupListener() {
         new Thread(() -> {
             while (socket.isConnected()) {
                 try {
                     getListener().onPacketReceived(receive());
                 } catch (Exception exception) {
-                    if (exception instanceof SocketTimeoutException) {
-                        if (isConnected()) {
-                            continue;
-                        } else {
-                            throw new RuntimeException(exception);
-                        }
-                    }
+                    if (exception instanceof SocketTimeoutException && isConnected()) continue;
                     exception.printStackTrace();
                 }
             }
@@ -53,8 +46,7 @@ public class EncryptedConnection {
 
     public void send(byte[] bytes) throws Exception {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-        byte[] encrypted = AES.encrypt(bytes, aes, iv);
-        out.writeUTF(Base64.getEncoder().encodeToString(encrypted));
+        out.writeUTF(Base64.getEncoder().encodeToString(AES.encrypt(bytes, aes, iv)));
         out.flush();
     }
 

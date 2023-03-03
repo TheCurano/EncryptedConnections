@@ -10,12 +10,15 @@ import java.net.Socket;
 public class Test {
 
     public static void main(String[] args) {
+        final int[] succeededActions = {0};
+        long start = System.currentTimeMillis();
 
         try {
             EncryptedServer server = new EncryptedServer(62411);
             server.start().listener(new ServerListener() {
                 @Override
                 public void onPacketReceived(EncryptedConnection connection, Packet<?> packet) {
+                    succeededActions[0]++;
                     System.out.println("[Server] Received packet: " + packet.getObject());
                 }
 
@@ -42,10 +45,9 @@ public class Test {
                 @Override
                 public void onPacketReceived(Packet<?> packet) {
                     System.out.println("[Client] Received packet: " + packet.getObject());
+                    succeededActions[0]++;
                 }
             });
-
-            client01.getEncryptedConnection().send(new Packet<>("TEST"));
             if (client01.getEncryptedConnection().isConnected()) {
                 System.out.println("[Server] Connection established");
             }
@@ -56,6 +58,15 @@ public class Test {
                     throw new RuntimeException(exception);
                 }
             });
+
+            client01.getEncryptedConnection().send(new Packet<>("TEST"));
+
+            Thread.sleep(500);
+            if (succeededActions[0] == 2) {
+                System.out.println("Test succeeded in (" + (System.currentTimeMillis() - start) + "ms)");
+            } else {
+                System.out.println("Test failed in (" + (System.currentTimeMillis() - start) + "ms)");
+            }
 
         } catch (Exception exception) {
             exception.printStackTrace();
