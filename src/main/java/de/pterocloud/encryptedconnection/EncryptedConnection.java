@@ -32,10 +32,6 @@ public class EncryptedConnection {
         out.flush();
     }
 
-    public void send(Packet<?> packet) throws Exception {
-        send(packet.serialize());
-    }
-
     protected Packet<?> receive() throws Exception {
         socket.setSoTimeout(60000);
         DataInputStream in = new DataInputStream(socket.getInputStream());

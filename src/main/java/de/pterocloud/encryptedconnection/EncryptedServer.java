@@ -65,7 +65,7 @@ public class EncryptedServer {
                                     break;
                                 }
                                 listener.onPacketReceived(encryptedConnection, pv);
-                            } catch (SocketTimeoutException exception) {
+                            } catch (Exception exception) {
                                 encryptedConnections.remove(encryptedConnection);
                                 listener.onDisconnect(encryptedConnection.getClient(), encryptedConnection);
                                 break;
@@ -126,7 +126,7 @@ public class EncryptedServer {
 
     public void disconnectClient(EncryptedConnection encryptedConnection) {
         try {
-            encryptedConnection.send(new Packet<>(null, (byte) 1));
+            encryptedConnection.send(new Packet<>(null, (byte) 1).serialize());
             encryptedConnection.getSocket().close();
         } catch (Exception ignored) {
         }

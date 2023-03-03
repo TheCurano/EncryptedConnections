@@ -5,10 +5,7 @@ import de.pterocloud.encryptedconnection.listener.ClientListener;
 
 import javax.crypto.SecretKey;
 import java.io.*;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketTimeoutException;
+import java.net.*;
 import java.security.KeyPair;
 import java.util.Base64;
 
@@ -44,6 +41,21 @@ public class EncryptedClient {
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             out.writeUTF(Base64.getEncoder().encodeToString(bytes));
             out.flush();
+        } catch (Exception exception) {
+            getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void send(Packet<?> packet) throws IOException {
+        try {
+            if (socket == null || !socket.isConnected())
+                throw new SocketTimeoutException("Socket is not connected");
+            encryptedConnection.send(packet.serialize());
         } catch (Exception exception) {
             getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
             try {
@@ -110,7 +122,13 @@ public class EncryptedClient {
                     getListener().onPacketReceived(packet);
                 } catch (Exception exception) {
                     if (exception instanceof SocketTimeoutException && getEncryptedConnection().isConnected()) continue;
-                    exception.printStackTrace();
+                    try {
+                        getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
+                        socket.close();
+                        break;
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }).start();
@@ -123,7 +141,7 @@ public class EncryptedClient {
     }
 
     public void disconnect() throws Exception {
-        getEncryptedConnection().send(new Packet<>(null, (byte) 1));
+        getEncryptedConnection().send(new Packet<>(null, (byte) 1).serialize());
         getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
         socket.close();
     }
