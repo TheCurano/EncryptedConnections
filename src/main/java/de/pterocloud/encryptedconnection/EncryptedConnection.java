@@ -8,8 +8,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
 
-import java.net.SocketTimeoutException;
-
 import java.util.Base64;
 
 public class EncryptedConnection {
@@ -21,27 +19,12 @@ public class EncryptedConnection {
     private final byte[] iv;
 
     private final Socket socket;
-    private ClientListener listener = new ClientListener() {
-    };
 
     public EncryptedConnection(Socket socket, EncryptedClient client, SecretKey aes, byte[] iv) {
         this.client = client;
         this.socket = socket;
         this.aes = aes;
         this.iv = iv;
-    }
-
-    public void setupListener() {
-        new Thread(() -> {
-            while (socket.isConnected()) {
-                try {
-                    getListener().onPacketReceived(receive());
-                } catch (Exception exception) {
-                    if (exception instanceof SocketTimeoutException && isConnected()) continue;
-                    exception.printStackTrace();
-                }
-            }
-        }).start();
     }
 
     public void send(byte[] bytes) throws Exception {
@@ -71,15 +54,6 @@ public class EncryptedConnection {
 
     public boolean isConnected() {
         return socket != null && socket.isConnected();
-    }
-
-    public EncryptedConnection listener(ClientListener listener) {
-        this.listener = listener;
-        return this;
-    }
-
-    public ClientListener getListener() {
-        return listener;
     }
 
 }

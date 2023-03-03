@@ -41,7 +41,7 @@ public class Test {
 
             EncryptedClient client01 = new EncryptedClient("0.0.0.0", 62411);
             client01.connect();
-            client01.getEncryptedConnection().listener(new ClientListener() {
+            client01.listener(new ClientListener() {
                 @Override
                 public void onPacketReceived(Packet<?> packet) {
                     System.out.println("[Client] Received packet: " + packet.getObject());

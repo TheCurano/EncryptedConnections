@@ -1,10 +1,14 @@
 package de.pterocloud.encryptedconnection;
 
 import de.pterocloud.encryptedconnection.crypto.RSA;
+import de.pterocloud.encryptedconnection.listener.ClientListener;
 
 import javax.crypto.SecretKey;
 import java.io.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.security.KeyPair;
 import java.util.Base64;
 
@@ -19,6 +23,8 @@ public class EncryptedClient {
     protected Socket socket = null;
 
     protected EncryptedConnection encryptedConnection = null;
+
+    protected ClientListener listener;
 
     public EncryptedClient(String host, int port) {
         this.host = host;
@@ -82,7 +88,17 @@ public class EncryptedClient {
 
         // Creating EncryptedConnection
         encryptedConnection = new EncryptedConnection(socket, this, (SecretKey) aesPacket.getObject(), (byte[]) iv.getObject());
-        encryptedConnection.setupListener();
+
+        new Thread(() -> {
+            while (socket.isConnected()) {
+                try {
+                    getListener().onPacketReceived(getEncryptedConnection().receive());
+                } catch (Exception exception) {
+                    if (exception instanceof SocketTimeoutException && getEncryptedConnection().isConnected()) continue;
+                    exception.printStackTrace();
+                }
+            }
+        }).start();
         return this;
     }
 
@@ -91,12 +107,17 @@ public class EncryptedClient {
     }
 
     public void disconnect() throws IOException {
+        getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
         socket.close();
     }
 
-    @Deprecated
-    public Socket getSocket() {
-        return socket;
+    public EncryptedClient listener(ClientListener listener) {
+        this.listener = listener;
+        return this;
+    }
+
+    public ClientListener getListener() {
+        return listener;
     }
 
 }

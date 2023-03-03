@@ -8,6 +8,7 @@ import javax.crypto.SecretKey;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -56,8 +57,14 @@ public class EncryptedServer {
                         encryptedConnections.add(encryptedConnection);
                         listener.onPostConnect(encryptedConnection.getClient(), encryptedConnection);
                         while (socket.isConnected()) {
-                            Packet<?> pv = encryptedConnection.receive();
-                            listener.onPacketReceived(encryptedConnection, pv);
+                            try {
+                                Packet<?> pv = encryptedConnection.receive();
+                                listener.onPacketReceived(encryptedConnection, pv);
+                            } catch (SocketTimeoutException exception) {
+                                encryptedConnections.remove(encryptedConnection);
+                                listener.onDisconnect(encryptedConnection.getClient(), encryptedConnection);
+                                break;
+                            }
                         }
                     } catch (Exception exception) {
                         throw new RuntimeException(exception);
