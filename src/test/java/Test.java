@@ -32,7 +32,7 @@ public class Test {
                 public void onPostConnect(EncryptedClient client, EncryptedConnection connection) {
                     System.out.println("[Server] PostConnect");
                     try {
-                        connection.send(new Packet<>("TEST"));
+                        connection.send(new Packet<>("TEST (to client)"));
                     } catch (Exception exception) {
                         throw new RuntimeException(exception);
                     }
@@ -52,7 +52,7 @@ public class Test {
                 System.out.println("[Server] Connection established");
             }
 
-            client01.getEncryptedConnection().send(new Packet<>("TEST"));
+            client01.getEncryptedConnection().send(new Packet<>("TEST (to server)"));
 
             Thread.sleep(500);
             if (succeededActions[0] == 2) {
