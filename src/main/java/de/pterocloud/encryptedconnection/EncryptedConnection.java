@@ -30,7 +30,7 @@ public class EncryptedConnection {
     }
 
     protected Packet<?> receive() throws Exception {
-        //socket.setSoTimeout(60000);
+        socket.setSoTimeout(Integer.MAX_VALUE);
         DataInputStream in = new DataInputStream(socket.getInputStream());
         byte[] bytes = Base64.getDecoder().decode(in.readUTF());
         return Packet.deserialize(AES.decrypt(bytes, aes, iv));

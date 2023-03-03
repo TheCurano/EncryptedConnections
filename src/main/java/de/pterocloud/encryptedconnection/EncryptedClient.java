@@ -5,10 +5,7 @@ import de.pterocloud.encryptedconnection.listener.ClientListener;
 
 import javax.crypto.SecretKey;
 import java.io.*;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketTimeoutException;
+import java.net.*;
 import java.security.KeyPair;
 import java.util.Base64;
 
@@ -68,8 +65,7 @@ public class EncryptedClient {
      * @throws IOException
      */
     protected byte[] receive() throws IOException {
-        //if (autoReconnect) socket.setSoTimeout(Integer.MAX_VALUE);
-        //else socket.setSoTimeout(60000);
+        socket.setSoTimeout(Integer.MAX_VALUE);
         return Base64.getDecoder().decode(new DataInputStream(socket.getInputStream()).readUTF());
     }
 
@@ -84,9 +80,7 @@ public class EncryptedClient {
         // Connecting
         socket = new Socket(host, port);
         socket.setKeepAlive(true);
-
-//        if (autoReconnect) socket.setSoTimeout(Integer.MAX_VALUE);
-//        else socket.setSoTimeout(60000);
+        socket.setSoTimeout(Integer.MAX_VALUE);
 
         // Sending and receiving required packets for the Encryption
         send(new Packet<>(rsa.getPublic(), (byte) 0).serialize());
@@ -125,9 +119,14 @@ public class EncryptedClient {
                         getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
                         break;
                     } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        e.printStackTrace();
                     }
                 }
+            }
+            try {
+                getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
+            } catch (UnknownHostException exception) {
+                exception.printStackTrace();
             }
         }).start();
         getListener().onConnect(new InetSocketAddress(InetAddress.getByName(host), port));

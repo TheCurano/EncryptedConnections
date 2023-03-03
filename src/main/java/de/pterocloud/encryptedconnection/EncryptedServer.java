@@ -113,7 +113,7 @@ public class EncryptedServer {
     }
 
     protected byte[] receive(Socket socket) throws IOException {
-        //socket.setSoTimeout(60000);
+        socket.setSoTimeout(Integer.MAX_VALUE);
         DataInputStream in = new DataInputStream(socket.getInputStream());
         return Base64.getDecoder().decode(in.readUTF());
     }
