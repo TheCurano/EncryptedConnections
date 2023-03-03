@@ -47,8 +47,10 @@ public class EncryptedClient {
 
     public void send(Packet<?> packet) throws IOException {
         try {
-            if (socket == null || !socket.isConnected())
+            if (socket == null || !socket.isConnected()) {
+                System.out.println("Socket is not connected");
                 throw new SocketTimeoutException("Socket is not connected");
+            }
             encryptedConnection.send(packet.serialize());
         } catch (Exception exception) {
             getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
