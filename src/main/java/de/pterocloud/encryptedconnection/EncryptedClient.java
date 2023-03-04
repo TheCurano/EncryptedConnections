@@ -1,10 +1,11 @@
 package de.pterocloud.encryptedconnection;
 
 import de.pterocloud.encryptedconnection.crypto.RSA;
+import de.pterocloud.encryptedconnection.listener.ClientListener;
 
 import javax.crypto.SecretKey;
 import java.io.*;
-import java.net.Socket;
+import java.net.*;
 import java.security.KeyPair;
 import java.util.Base64;
 
@@ -16,13 +17,17 @@ public class EncryptedClient {
 
     protected final int port;
 
-    protected Socket socket = null;
+    protected Socket socket;
 
-    protected EncryptedConnection encryptedConnection = null;
+    protected EncryptedConnection encryptedConnection;
+
+    protected ClientListener listener;
 
     public EncryptedClient(String host, int port) {
         this.host = host;
         this.port = port;
+        this.listener = new ClientListener() {
+        };
     }
 
     /**
@@ -37,6 +42,22 @@ public class EncryptedClient {
         out.flush();
     }
 
+    public void send(Packet<?> packet) throws IOException {
+        try {
+            if (socket == null || !socket.isConnected()) {
+                throw new SocketTimeoutException("Socket is not connected");
+            }
+            encryptedConnection.send(packet.serialize());
+        } catch (Exception exception) {
+            getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     /**
      * Not encrypted receive
      *
@@ -44,10 +65,8 @@ public class EncryptedClient {
      * @throws IOException
      */
     protected byte[] receive() throws IOException {
-        socket.setSoTimeout(60000);
-        DataInputStream in = new DataInputStream(socket.getInputStream());
-
-        return Base64.getDecoder().decode(in.readUTF());
+        socket.setSoTimeout(Integer.MAX_VALUE);
+        return Base64.getDecoder().decode(new DataInputStream(socket.getInputStream()).readUTF());
     }
 
     /**
@@ -61,6 +80,7 @@ public class EncryptedClient {
         // Connecting
         socket = new Socket(host, port);
         socket.setKeepAlive(true);
+        socket.setSoTimeout(Integer.MAX_VALUE);
 
         // Sending and receiving required packets for the Encryption
         send(new Packet<>(rsa.getPublic(), (byte) 0).serialize());
@@ -81,7 +101,35 @@ public class EncryptedClient {
         }
 
         // Creating EncryptedConnection
-        encryptedConnection = new EncryptedConnection(socket, this, (SecretKey) aesPacket.getObject(), (byte[]) iv.getObject());
+        encryptedConnection = new EncryptedConnection(socket, (SecretKey) aesPacket.getObject(), (byte[]) iv.getObject());
+        new Thread(() -> {
+            while (socket.isConnected()) {
+                try {
+                    Packet<?> packet = getEncryptedConnection().receive();
+                    if (packet.getType() == (byte) 1) {
+                        socket.close();
+                        getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
+                        break;
+                    }
+                    getListener().onPacketReceived(packet);
+                } catch (Exception exception) {
+                    if (exception instanceof SocketTimeoutException && getEncryptedConnection().isConnected()) continue;
+                    try {
+                        socket.close();
+                        getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
+                        break;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            try {
+                getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
+            } catch (UnknownHostException exception) {
+                exception.printStackTrace();
+            }
+        }).start();
+        getListener().onConnect(new InetSocketAddress(InetAddress.getByName(host), port));
         return this;
     }
 
@@ -89,13 +137,19 @@ public class EncryptedClient {
         return encryptedConnection;
     }
 
-    public void disconnect() throws IOException {
+    public void disconnect() throws Exception {
+        getEncryptedConnection().send(new Packet<>(null, (byte) 1).serialize());
+        getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
         socket.close();
     }
 
-    @Deprecated
-    public Socket getSocket() {
-        return socket;
+    public EncryptedClient listener(ClientListener listener) {
+        this.listener = listener;
+        return this;
+    }
+
+    public ClientListener getListener() {
+        return listener;
     }
 
 }

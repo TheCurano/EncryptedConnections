@@ -1,26 +1,11 @@
 package de.pterocloud.encryptedconnection.listener;
 
-import de.pterocloud.encryptedconnection.EncryptedClient;
 import de.pterocloud.encryptedconnection.EncryptedConnection;
 import de.pterocloud.encryptedconnection.Packet;
 
 import java.net.Socket;
 
-/**
- * The Listener for an entire EncryptedServer
- * Trigger: PacketReceived, PreConnect (not encrypted), PostConnect (encrypted)
- */
 public interface ServerListener {
-
-    /**
-     * Triggered when a packet is received
-     *
-     * @param connection the connection
-     * @param packet     the packet
-     */
-    default void onPacketReceived(EncryptedConnection connection, Packet<?> packet) {
-
-    }
 
     /**
      * Triggered before the connection is encrypted
@@ -38,7 +23,26 @@ public interface ServerListener {
      * @param client     the client
      * @param connection the connection
      */
-    default void onPostConnect(EncryptedClient client, EncryptedConnection connection) {
+    default void onPostConnect(EncryptedConnection connection) {
+
+    }
+
+    /**
+     * Triggered when the connection is disconnected
+     *
+     * @param connection the connection
+     */
+    default void onDisconnect(EncryptedConnection connection) {
+
+    }
+
+    /**
+     * Triggered when a packet is received
+     *
+     * @param connection the connection
+     * @param packet     the packet
+     */
+    default void onPacketReceived(EncryptedConnection connection, Packet<?> packet) {
 
     }
 
