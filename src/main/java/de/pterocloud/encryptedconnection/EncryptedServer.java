@@ -57,6 +57,7 @@ public class EncryptedServer {
                         while (socket.isConnected()) {
                             try {
                                 Packet<?> pv = encryptedConnection.receive();
+                                if (!encryptedConnections.contains(encryptedConnection)) break;
                                 if (pv.getType() == 1) {
                                     encryptedConnections.remove(encryptedConnection);
                                     listener.onDisconnect(encryptedConnection);
@@ -76,7 +77,6 @@ public class EncryptedServer {
             } catch (Exception exception) {
                 exception.printStackTrace();
             }
-            encryptedConnections.removeIf(connection -> !connection.getSocket().isConnected());
         }
     });
 
