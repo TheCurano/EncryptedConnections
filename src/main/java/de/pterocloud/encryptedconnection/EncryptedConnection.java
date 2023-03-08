@@ -8,6 +8,8 @@ import java.io.DataOutputStream;
 import java.net.Socket;
 
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EncryptedConnection {
 
@@ -17,10 +19,19 @@ public class EncryptedConnection {
 
     private final Socket socket;
 
-    public EncryptedConnection(Socket socket, SecretKey aes, byte[] iv) {
+    private Map<String, Object> headers;
+
+    public EncryptedConnection(Socket socket, SecretKey aes, byte[] iv, boolean server) {
         this.socket = socket;
         this.aes = aes;
         this.iv = iv;
+        this.headers = new HashMap<>();
+
+        try {
+            if (server) this.headers = (Map<String, Object>) receive().getObject();
+        } catch (Exception ignored) {
+            // can happen if it's a server connection
+        }
     }
 
     public void send(byte[] bytes) throws Exception {
@@ -42,6 +53,14 @@ public class EncryptedConnection {
 
     public boolean isConnected() {
         return socket != null && socket.isConnected();
+    }
+
+    public Map<String, Object> getHeaders() {
+        return headers;
+    }
+
+    public Object getHeader(String key) {
+        return headers.get(key);
     }
 
 }
