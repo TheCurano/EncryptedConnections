@@ -51,7 +51,8 @@ public class EncryptedServer {
                         send(socket, aesPacket.serialize());
                         send(socket, ivPacket.serialize());
                         // EncryptedConnection encryptedConnection = new EncryptedConnection(socket, this, aes, iv, publicKey);
-                        EncryptedConnection encryptedConnection = new EncryptedConnection(socket, aes, iv);
+
+                        EncryptedConnection encryptedConnection = new EncryptedConnection(socket, aes, iv, true);
                         encryptedConnections.add(encryptedConnection);
                         listener.onPostConnect(encryptedConnection);
                         while (socket.isConnected()) {

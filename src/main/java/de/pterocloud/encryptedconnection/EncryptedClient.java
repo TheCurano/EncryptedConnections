@@ -8,6 +8,8 @@ import java.io.*;
 import java.net.*;
 import java.security.KeyPair;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EncryptedClient {
 
@@ -17,6 +19,8 @@ public class EncryptedClient {
 
     protected final int port;
 
+    private final Map<String, Object> headers;
+
     protected Socket socket;
 
     protected EncryptedConnection encryptedConnection;
@@ -24,6 +28,7 @@ public class EncryptedClient {
     protected ClientListener listener;
 
     public EncryptedClient(String host, int port) {
+        this.headers = new HashMap<>();
         this.host = host;
         this.port = port;
         this.listener = new ClientListener() {
@@ -101,7 +106,7 @@ public class EncryptedClient {
         }
 
         // Creating EncryptedConnection
-        encryptedConnection = new EncryptedConnection(socket, (SecretKey) aesPacket.getObject(), (byte[]) iv.getObject());
+        encryptedConnection = new EncryptedConnection(socket, (SecretKey) aesPacket.getObject(), (byte[]) iv.getObject(), false);
         new Thread(() -> {
             while (socket.isConnected()) {
                 try {
@@ -129,6 +134,7 @@ public class EncryptedClient {
                 exception.printStackTrace();
             }
         }).start();
+        send(new Packet<>(headers, (byte) 11));
         getListener().onConnect(new InetSocketAddress(InetAddress.getByName(host), port));
         return this;
     }
@@ -145,6 +151,11 @@ public class EncryptedClient {
 
     public EncryptedClient listener(ClientListener listener) {
         this.listener = listener;
+        return this;
+    }
+
+    public EncryptedClient header(String key, Object value) {
+        headers.put(key, value);
         return this;
     }
 

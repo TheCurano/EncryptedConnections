@@ -21,6 +21,9 @@ public class TestServer {
                     @Override
                     public void onPostConnect(EncryptedConnection connection) {
                         System.out.println("[Server] Client connected from " + connection.getSocket().getInetAddress().getHostAddress());
+                        System.out.println("A: " + connection.getHeader("Test-A"));
+                        System.out.println("B: " + connection.getHeader("Test-B"));
+                        System.out.println("C: " + connection.getHeader("Test-C"));
                     }
 
                     @Override

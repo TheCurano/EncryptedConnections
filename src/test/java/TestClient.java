@@ -9,6 +9,9 @@ public class TestClient {
     public static void main(String[] args) throws Exception {
         long start = System.currentTimeMillis();
         EncryptedClient client = new EncryptedClient("0.0.0.0", 62419)
+                .header("Test-A", "a-a-a")
+                .header("Test-B", "b-b-b")
+                .header("Test-C", "c-c-c")
                 .listener(new ClientListener() {
 
                               @Override
