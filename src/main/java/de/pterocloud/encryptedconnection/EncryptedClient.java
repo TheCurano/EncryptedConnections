@@ -81,7 +81,7 @@ public class EncryptedClient {
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    public EncryptedClient connect() throws IOException, ClassNotFoundException {
+    public EncryptedClient connect(boolean fastConnection) throws IOException, ClassNotFoundException {
         // Connecting
         socket = new Socket(host, port);
         socket.setKeepAlive(true);
@@ -89,24 +89,46 @@ public class EncryptedClient {
 
         // Sending and receiving required packets for the Encryption
         send(new Packet<>(rsa.getPublic(), (byte) 0).serialize());
-        Packet<?> aesPacket = Packet.deserialize(receive());
-        Packet<?> iv = Packet.deserialize(receive());
+        send(new Packet<>(fastConnection, (byte) 0).serialize());
+        if (fastConnection) {
+            Packet<?> chaPacket = Packet.deserialize(receive());
+            Packet<?> nouncePacket = Packet.deserialize(receive());
+            byte[] decryptedAESKey = RSA.decrypt(rsa.getPrivate(), Base64.getDecoder().decode((String) chaPacket.getObject()));
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64.getDecoder().decode(decryptedAESKey));
+            ObjectInputStream dataInput = new ObjectInputStream(inputStream);
+            SecretKey chaKey = (SecretKey) dataInput.readObject();
+            byte[] nounce = RSA.decrypt(rsa.getPrivate(), Base64.getDecoder().decode((String) nouncePacket.getObject()));
+            encryptedConnection = new EncryptedConnection(socket, chaKey, nounce, false, fastConnection);
+            try {
+                encryptedConnection.send(new Packet<>(headers, (byte) 11));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            Packet<?> aesPacket = Packet.deserialize(receive());
+            Packet<?> ivPacket = Packet.deserialize(receive());
 
-        // Decrypting received packets
-        byte[] decryptedAESKey = RSA.decrypt(rsa.getPrivate(), Base64.getDecoder().decode((String) aesPacket.getObject()));
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64.getDecoder().decode(decryptedAESKey));
-        ObjectInputStream dataInput = new ObjectInputStream(inputStream);
-        SecretKey aesKey = (SecretKey) dataInput.readObject();
-        dataInput.close();
-        aesPacket = new Packet<>(aesKey, (byte) 0);
-        iv = new Packet<>(RSA.decrypt(rsa.getPrivate(), Base64.getDecoder().decode((String) iv.getObject())), (byte) 0);
-
-        if (aesPacket.getType() != (byte) 0 && iv.getType() != (byte) 0) {
-            throw new RuntimeException("Invalid init packets.");
+            // Decrypting received packets
+            byte[] decryptedAESKey = RSA.decrypt(rsa.getPrivate(), Base64.getDecoder().decode((String) aesPacket.getObject()));
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64.getDecoder().decode(decryptedAESKey));
+            ObjectInputStream dataInput = new ObjectInputStream(inputStream);
+            SecretKey aesKey = (SecretKey) dataInput.readObject();
+            dataInput.close();
+            aesPacket = new Packet<>(aesKey, (byte) 0);
+            byte[] iv = RSA.decrypt(rsa.getPrivate(), Base64.getDecoder().decode((String) ivPacket.getObject()));
+            if (aesPacket.getType() != (byte) 0 && ivPacket.getType() != (byte) 0) {
+                throw new RuntimeException("Invalid init packets.");
+            }
+            encryptedConnection = new EncryptedConnection(socket, (SecretKey) aesPacket.getObject(), iv, false, fastConnection);
+            try {
+                encryptedConnection.send(new Packet<>(headers, (byte) 11));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
 
         // Creating EncryptedConnection
-        encryptedConnection = new EncryptedConnection(socket, (SecretKey) aesPacket.getObject(), (byte[]) iv.getObject(), false);
+
         new Thread(() -> {
             while (socket.isConnected()) {
                 try {
@@ -134,7 +156,6 @@ public class EncryptedClient {
                 exception.printStackTrace();
             }
         }).start();
-        send(new Packet<>(headers, (byte) 11));
         getListener().onConnect(new InetSocketAddress(InetAddress.getByName(host), port));
         return this;
     }

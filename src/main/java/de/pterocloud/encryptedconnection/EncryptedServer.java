@@ -1,6 +1,7 @@
 package de.pterocloud.encryptedconnection;
 
 import de.pterocloud.encryptedconnection.crypto.AES;
+import de.pterocloud.encryptedconnection.crypto.ChaCha20;
 import de.pterocloud.encryptedconnection.crypto.RSA;
 import de.pterocloud.encryptedconnection.listener.ServerListener;
 
@@ -34,25 +35,44 @@ public class EncryptedServer {
                     try {
                         Packet<?> packet = Packet.deserialize(receive(socket));
                         PublicKey publicKey = (PublicKey) packet.getObject();
-                        SecretKey aes = AES.generateKey();
-                        byte[] iv = AES.generateIV();
+                        Packet<?> fastConnectionPacket = Packet.deserialize(receive(socket));
+                        boolean fastConnection = (boolean) fastConnectionPacket.getObject();
+                        EncryptedConnection encryptedConnection = null;
+                        if (fastConnection) {
+                            SecretKey cha = ChaCha20.generateKey();
+                            byte[] nounce = ChaCha20.generateNonce();
 
-                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        ObjectOutputStream dataOutput = new ObjectOutputStream(outputStream);
-                        dataOutput.writeObject(aes);
-                        dataOutput.close();
+                            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                            ObjectOutputStream dataOutput = new ObjectOutputStream(outputStream);
+                            dataOutput.writeObject(cha);
+                            dataOutput.close();
+                            byte[] chaEncrypted = RSA.encrypt(publicKey, Base64.getEncoder().encode(outputStream.toByteArray()));
+                            Packet<?> chaPacket = new Packet<>(Base64.getEncoder().encodeToString(chaEncrypted), (byte) 0);
 
-                        byte[] aesKeyEncrypted = RSA.encrypt(publicKey, Base64.getEncoder().encode(outputStream.toByteArray()));
-                        Packet<?> aesPacket = new Packet<>(Base64.getEncoder().encodeToString(aesKeyEncrypted), (byte) 0);
+                            byte[] nounceEncrypted = RSA.encrypt(publicKey, nounce);
+                            Packet<?> nouncePacket = new Packet<>(Base64.getEncoder().encodeToString(nounceEncrypted), (byte) 0);
+                            send(socket, chaPacket.serialize());
+                            send(socket, nouncePacket.serialize());
+                            encryptedConnection = new EncryptedConnection(socket, cha, nounce, true, fastConnection);
+                        } else {
+                            SecretKey aes = AES.generateKey();
+                            byte[] iv = AES.generateIV();
 
-                        byte[] ivEncrypted = RSA.encrypt(publicKey, iv);
-                        Packet<?> ivPacket = new Packet<>(Base64.getEncoder().encodeToString(ivEncrypted), (byte) 0);
+                            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                            ObjectOutputStream dataOutput = new ObjectOutputStream(outputStream);
+                            dataOutput.writeObject(aes);
+                            dataOutput.close();
 
-                        send(socket, aesPacket.serialize());
-                        send(socket, ivPacket.serialize());
-                        // EncryptedConnection encryptedConnection = new EncryptedConnection(socket, this, aes, iv, publicKey);
+                            byte[] aesKeyEncrypted = RSA.encrypt(publicKey, Base64.getEncoder().encode(outputStream.toByteArray()));
+                            Packet<?> aesPacket = new Packet<>(Base64.getEncoder().encodeToString(aesKeyEncrypted), (byte) 0);
 
-                        EncryptedConnection encryptedConnection = new EncryptedConnection(socket, aes, iv, true);
+                            byte[] ivEncrypted = RSA.encrypt(publicKey, iv);
+                            Packet<?> ivPacket = new Packet<>(Base64.getEncoder().encodeToString(ivEncrypted), (byte) 0);
+
+                            send(socket, aesPacket.serialize());
+                            send(socket, ivPacket.serialize());
+                            encryptedConnection = new EncryptedConnection(socket, aes, iv, true, fastConnection);
+                        }
                         encryptedConnections.add(encryptedConnection);
                         listener.onPostConnect(encryptedConnection);
                         while (socket.isConnected()) {
