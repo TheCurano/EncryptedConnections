@@ -100,7 +100,7 @@ public class EncryptedClient {
             byte[] nounce = RSA.decrypt(rsa.getPrivate(), Base64.getDecoder().decode((String) nouncePacket.getObject()));
             encryptedConnection = new EncryptedConnection(socket, chaKey, nounce, false, fastConnection);
             try {
-                encryptedConnection.send(new Packet<>(headers, (byte) 11));
+                encryptedConnection.send(new Packet<>(headers, (byte) 0));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -121,7 +121,7 @@ public class EncryptedClient {
             }
             encryptedConnection = new EncryptedConnection(socket, (SecretKey) aesPacket.getObject(), iv, false, fastConnection);
             try {
-                encryptedConnection.send(new Packet<>(headers, (byte) 11));
+                encryptedConnection.send(new Packet<>(headers, (byte) 0));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
