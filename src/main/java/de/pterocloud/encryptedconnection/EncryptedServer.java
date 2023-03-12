@@ -85,6 +85,7 @@ public class EncryptedServer {
                                     listener.onDisconnect(encryptedConnection);
                                     break;
                                 }
+                                listener.onPacketReceived(encryptedConnection, pv);
                             } catch (Exception exception) {
                                 encryptedConnections.remove(encryptedConnection);
                                 listener.onDisconnect(encryptedConnection);

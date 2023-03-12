@@ -38,14 +38,15 @@ public class EncryptedConnection {
 
 
     public void send(byte[] bytes) throws Exception {
-        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
         byte[] encrypted;
         if (fastConnect) {
             encrypted = ChaCha20.encrypt(bytes, key, keyAdd, 1);
         } else {
             encrypted = AES.encrypt(bytes, key, keyAdd);
         }
-        out.writeUTF(Base64.getEncoder().encodeToString(encrypted));
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+        out.writeInt(encrypted.length);
+        out.write(encrypted);
         out.flush();
     }
 
@@ -56,7 +57,8 @@ public class EncryptedConnection {
     protected Packet<?> receive() throws Exception {
         socket.setSoTimeout(Integer.MAX_VALUE);
         DataInputStream in = new DataInputStream(socket.getInputStream());
-        byte[] bytes = Base64.getDecoder().decode(in.readUTF());
+        int length = in.readInt();
+        byte[] bytes = in.readNBytes(length);
         if (fastConnect)
             return Packet.deserialize(ChaCha20.decrypt(bytes, key, keyAdd, 1));
         return Packet.deserialize(AES.decrypt(bytes, key, keyAdd));
