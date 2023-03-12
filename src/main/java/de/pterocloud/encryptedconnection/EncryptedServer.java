@@ -88,6 +88,9 @@ public class EncryptedServer {
                             } catch (Exception exception) {
                                 encryptedConnections.remove(encryptedConnection);
                                 listener.onDisconnect(encryptedConnection);
+                                if (!(exception instanceof SocketTimeoutException)) {
+                                    exception.printStackTrace();
+                                }
                                 break;
                             }
                         }
