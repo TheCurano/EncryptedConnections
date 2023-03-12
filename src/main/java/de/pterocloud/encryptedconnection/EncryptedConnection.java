@@ -57,7 +57,6 @@ public class EncryptedConnection {
         socket.setSoTimeout(Integer.MAX_VALUE);
         DataInputStream in = new DataInputStream(socket.getInputStream());
         byte[] bytes = Base64.getDecoder().decode(in.readUTF());
-        in.close();
         if (fastConnect)
             return Packet.deserialize(ChaCha20.decrypt(bytes, key, keyAdd, 1));
         return Packet.deserialize(AES.decrypt(bytes, key, keyAdd));

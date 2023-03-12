@@ -29,7 +29,7 @@ public class TestClient {
                                   System.out.println("[Client] Received packet: " + packet.getObject());
                               }
                           }
-                ).connect(false);
+                ).connect(true);
         System.out.println("Started client in " + (System.currentTimeMillis() - start) + "ms");
 
         client.send(new Packet<>("Test-Packet"));
