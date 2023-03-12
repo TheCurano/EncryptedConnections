@@ -80,11 +80,11 @@ public class EncryptedServer {
                                 Packet<?> pv = encryptedConnection.receive();
                                 if (!encryptedConnections.contains(encryptedConnection)) break;
                                 if (pv.getType() == 1) {
+                                    listener.onPacketReceived(encryptedConnection, pv);
                                     encryptedConnections.remove(encryptedConnection);
                                     listener.onDisconnect(encryptedConnection);
                                     break;
                                 }
-                                listener.onPacketReceived(encryptedConnection, pv);
                             } catch (Exception exception) {
                                 encryptedConnections.remove(encryptedConnection);
                                 listener.onDisconnect(encryptedConnection);
