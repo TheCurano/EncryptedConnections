@@ -134,6 +134,7 @@ public class EncryptedClient {
                 try {
                     Packet<?> packet = getEncryptedConnection().receive();
                     if (packet.getType() == (byte) 1) {
+                        getListener().onPacketReceived(packet);
                         socket.close();
                         getListener().onDisconnect(new InetSocketAddress(InetAddress.getByName(host), port));
                         break;
