@@ -27,7 +27,7 @@ public class EncryptedServer {
         while (server != null && !server.isClosed()) {
             try {
                 Socket socket = server.accept();
-                if (!listener.onPreConnect(socket)) {
+                if (!listener.onPreEncrypt(socket)) {
                     socket.close();
                     continue;
                 }
@@ -37,10 +37,10 @@ public class EncryptedServer {
                         PublicKey publicKey = (PublicKey) packet.getObject();
                         Packet<?> fastConnectionPacket = Packet.deserialize(receive(socket));
                         boolean fastConnection = (boolean) fastConnectionPacket.getObject();
-                        EncryptedConnection encryptedConnection = null;
+                        EncryptedConnection encryptedConnection;
                         if (fastConnection) {
                             SecretKey cha = ChaCha20.generateKey();
-                            byte[] nounce = ChaCha20.generateNonce();
+                            byte[] nonce = ChaCha20.generateNonce();
 
                             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                             ObjectOutputStream dataOutput = new ObjectOutputStream(outputStream);
@@ -49,11 +49,11 @@ public class EncryptedServer {
                             byte[] chaEncrypted = RSA.encrypt(publicKey, Base64.getEncoder().encode(outputStream.toByteArray()));
                             Packet<?> chaPacket = new Packet<>(Base64.getEncoder().encodeToString(chaEncrypted), (byte) 0);
 
-                            byte[] nounceEncrypted = RSA.encrypt(publicKey, nounce);
+                            byte[] nounceEncrypted = RSA.encrypt(publicKey, nonce);
                             Packet<?> nouncePacket = new Packet<>(Base64.getEncoder().encodeToString(nounceEncrypted), (byte) 0);
                             send(socket, chaPacket.serialize());
                             send(socket, nouncePacket.serialize());
-                            encryptedConnection = new EncryptedConnection(socket, cha, nounce, true, fastConnection);
+                            encryptedConnection = new EncryptedConnection(socket, cha, nonce, true, fastConnection);
                         } else {
                             SecretKey aes = AES.generateKey();
                             byte[] iv = AES.generateIV();
@@ -72,6 +72,10 @@ public class EncryptedServer {
                             send(socket, aesPacket.serialize());
                             send(socket, ivPacket.serialize());
                             encryptedConnection = new EncryptedConnection(socket, aes, iv, true, fastConnection);
+                        }
+                        if (!listener.onPreConnect(encryptedConnection)) {
+                            socket.close();
+                            return;
                         }
                         encryptedConnections.add(encryptedConnection);
                         listener.onPostConnect(encryptedConnection);

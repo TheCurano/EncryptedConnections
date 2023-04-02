@@ -14,17 +14,26 @@ public class TestServer {
         server.listener(new ServerListener() {
 
             @Override
-            public boolean onPreConnect(Socket socket) {
-                System.out.println("[Server] Client pre-connecting from " + socket.getInetAddress().getHostAddress());
+            public boolean onPreEncrypt(Socket socket) {
+                System.out.println("[Server] Client pre-encrypting from " + socket.getInetAddress().getHostAddress());
                 return true;
+            }
+
+            @Override
+            public boolean onPreConnect(EncryptedConnection connection) {
+                System.out.println("[Server] Client connecting from " + connection.getSocket().getInetAddress().getHostAddress());
+                System.out.println("(headers 01) A: " + connection.getHeader("Test-A"));
+                System.out.println("(headers 01) B: " + connection.getHeader("Test-B"));
+                System.out.println("(headers 01) C: " + connection.getHeader("Test-C"));
+                return false;
             }
 
             @Override
             public void onPostConnect(EncryptedConnection connection) {
                 System.out.println("[Server] Client connected from " + connection.getSocket().getInetAddress().getHostAddress());
-                System.out.println("A: " + connection.getHeader("Test-A"));
-                System.out.println("B: " + connection.getHeader("Test-B"));
-                System.out.println("C: " + connection.getHeader("Test-C"));
+                System.out.println("(headers 02) A: " + connection.getHeader("Test-A"));
+                System.out.println("(headers 02) B: " + connection.getHeader("Test-B"));
+                System.out.println("(headers 02) C: " + connection.getHeader("Test-C"));
             }
 
             @Override
