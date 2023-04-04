@@ -13,14 +13,23 @@ public interface ServerListener {
      * @param socket the socket
      * @return whether the connection should be accepted
      */
-    default boolean onPreConnect(Socket socket) {
+    default boolean onPreEncrypt(Socket socket) {
+        return true;
+    }
+
+    /**
+     * Triggered before the connection is accepted
+     *
+     * @param connection the connection
+     * @return whether the connection should be accepted
+     */
+    default boolean onPreConnect(EncryptedConnection connection) {
         return true;
     }
 
     /**
      * Triggered after the connection is encrypted
      *
-     * @param client     the client
      * @param connection the connection
      */
     default void onPostConnect(EncryptedConnection connection) {
